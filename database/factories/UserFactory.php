@@ -42,4 +42,12 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /** A platform Super Admin (not tied to any company). */
+    public function systemAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_system_admin' => true,
+        ]);
+    }
 }

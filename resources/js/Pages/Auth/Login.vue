@@ -37,6 +37,10 @@ const submit = () => {
             {{ status }}
         </div>
 
+        <div v-if="$page.props.flash.error" class="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+            {{ $page.props.flash.error }}
+        </div>
+
         <form @submit.prevent="submit">
             <div>
                 <InputLabel for="email" value="Email" />
@@ -96,5 +100,10 @@ const submit = () => {
                 </PrimaryButton>
             </div>
         </form>
+
+        <p class="mt-6 border-t border-gray-100 pt-4 text-center text-sm text-gray-600">
+            New company?
+            <Link :href="route('register')" class="font-medium text-indigo-600 hover:underline">Register your company</Link>
+        </p>
     </GuestLayout>
 </template>

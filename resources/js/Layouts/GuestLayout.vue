@@ -1,6 +1,10 @@
 <script setup>
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Link } from '@inertiajs/vue3';
+
+defineProps({
+    wide: { type: Boolean, default: false }, // roomier card for long forms
+});
 </script>
 
 <template>
@@ -14,7 +18,10 @@ import { Link } from '@inertiajs/vue3';
         </div>
 
         <div
-            class="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg"
+            :class="[
+                'mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:rounded-lg',
+                wide ? 'sm:max-w-3xl' : 'sm:max-w-md',
+            ]"
         >
             <slot />
         </div>

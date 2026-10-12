@@ -14,6 +14,12 @@ const page = usePage();
         <PageHeader :title="`Welcome, ${page.props.auth.user.name}`" subtitle="Your role-based dashboard will appear here." />
 
         <EmptyState
+            v-if="!page.props.currentOrganization"
+            title="You are not part of a company yet"
+            description="Ask your Company Admin to invite you, or register a new company."
+        />
+        <EmptyState
+            v-else
             title="Nothing to show yet"
             description="Projects, tasks and progress widgets will be added in the next phases."
         />

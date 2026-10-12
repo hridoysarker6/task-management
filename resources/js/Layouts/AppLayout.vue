@@ -10,26 +10,34 @@ import {
     BriefcaseIcon,
     BuildingOffice2Icon,
     ChartBarIcon,
+    ChevronUpDownIcon,
     ClipboardDocumentCheckIcon,
     HomeIcon,
+    ShieldCheckIcon,
     UsersIcon,
     XMarkIcon,
 } from '@heroicons/vue/24/outline';
+import { usePermissions } from '@/Composables/usePermissions';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const sidebarOpen = ref(false);
+const { can } = usePermissions();
+const organizations = computed(() => page.props.organizations ?? []);
 
 // Nav items are added phase by phase. `routeName: null` = not built yet (shown disabled).
-const nav = [
+// `permission` hides the item from people who lack it.
+const allNav = [
     { label: 'Dashboard', icon: HomeIcon, routeName: 'dashboard' },
     { label: 'My Work', icon: ClipboardDocumentCheckIcon, routeName: null },
     { label: 'Projects', icon: BriefcaseIcon, routeName: null },
     { label: 'People', icon: UsersIcon, routeName: null },
     { label: 'Reports', icon: ChartBarIcon, routeName: null },
+    { label: 'Roles & Permissions', icon: ShieldCheckIcon, routeName: 'roles.index', permission: 'role.view' },
 ];
+const nav = computed(() => allNav.filter((item) => !item.permission || can(item.permission)));
 
 const isActive = (item) => item.routeName && route().current(item.routeName + '*');
 const linkClass = (item) =>
@@ -82,7 +90,7 @@ const linkClass = (item) =>
                 </template>
             </nav>
 
-            <div class="border-t border-gray-200 p-3 text-xs text-gray-400">v0.1 &middot; Phase 0</div>
+            <div class="border-t border-gray-200 p-3 text-xs text-gray-400">v0.1 &middot; Phase 2</div>
         </aside>
 
         <div class="lg:pl-64">
@@ -92,8 +100,23 @@ const linkClass = (item) =>
                     <Bars3Icon class="h-5 w-5" />
                 </button>
 
-                <!-- Company switcher (wired up in Phase 2) -->
-                <div class="hidden items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 sm:flex">
+                <!-- Company switcher: a dropdown only for people who belong to more than one company -->
+                <Dropdown v-if="organizations.length > 1" align="left" width="48">
+                    <template #trigger>
+                        <button type="button" class="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
+                            <BuildingOffice2Icon class="h-4 w-4 text-gray-400" />
+                            <span>{{ $page.props.currentOrganization?.name }}</span>
+                            <ChevronUpDownIcon class="h-4 w-4 text-gray-400" />
+                        </button>
+                    </template>
+                    <template #content>
+                        <div class="border-b border-gray-100 px-4 py-2 text-xs text-gray-500">Switch company</div>
+                        <DropdownLink v-for="o in organizations" :key="o.id" :href="route('organizations.switch', o.id)" method="post" as="button">
+                            {{ o.name }}<span v-if="o.id === $page.props.currentOrganization?.id" class="ml-1 text-indigo-600">&#10003;</span>
+                        </DropdownLink>
+                    </template>
+                </Dropdown>
+                <div v-else class="hidden items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 sm:flex">
                     <BuildingOffice2Icon class="h-4 w-4 text-gray-400" />
                     <span>{{ $page.props.currentOrganization?.name ?? 'No company selected' }}</span>
                 </div>

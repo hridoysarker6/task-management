@@ -42,11 +42,25 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // Locked / anonymized accounts cannot sign in.
+        $credentials = [...$this->only('email', 'password'), 'status' => 'active'];
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+            ]);
+        }
+
+        $user = Auth::user();
+
+        // Someone whose only companies are suspended gets no access at all.
+        if (! $user->is_system_admin && $user->onlyInSuspendedCompanies()) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Your company\'s account is suspended. Please contact the platform administrator.',
             ]);
         }
 

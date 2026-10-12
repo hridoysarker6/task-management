@@ -36,36 +36,36 @@ References: [PLAN.md](PLAN.md) Â· [WORKFLOW.md](WORKFLOW.md) Â· [DATABASE.md
 - [x] 0.9 Configure queue (database driver), scheduler, and storage link
 
 ## Phase 1: Company Registration & System Admin (4 days)
-- [ ] 1.1 Migrations: change `users` (is_system_admin, status, phone, avatar, last_organization_id), `organizations`, `organization_reviews`, `organization_documents`
-- [ ] 1.2 Models + factories: Organization, OrganizationReview, OrganizationDocument
-- [ ] 1.3 Seeder: first **System Admin** user
-- [ ] 1.4 Public **Register Company** page (company info + contact person + documents) with validation
-- [ ] 1.5 Email verification, then the **Awaiting approval** page; block access while pending
-- [ ] 1.6 System Admin area: separate layout + `system.admin` middleware
-- [ ] 1.7 Companies list with tabs (pending / active / rejected / suspended) and search
-- [ ] 1.8 Company detail page: info, documents, review history
-- [ ] 1.9 Actions: **Approve**, **Reject** (reason), **Request info** (note), **Suspend / Reactivate**, set user limit
-- [ ] 1.10 Applicant **edit & resubmit** flow (after rejected / info requested)
-- [ ] 1.11 `CompanyProvisioningService` on approval: Company Admin membership, copy role template, default statuses
-- [ ] 1.12 Emails: registered (to system admins), approved, rejected, info requested
-- [ ] 1.13 Block login for users whose only company is suspended
-- [ ] 1.14 Tests: registration, approval provisioning, rejected/suspended access
+- [x] 1.1 Migrations: change `users` (is_system_admin, status, phone, avatar, last_organization_id), `organizations`, `organization_reviews`, `organization_documents`
+- [x] 1.2 Models + factories: Organization, OrganizationReview, OrganizationDocument
+- [x] 1.3 Seeder: first **System Admin** user
+- [x] 1.4 Public **Register Company** page (company info + contact person + documents) with validation
+- [x] 1.5 Email verification, then the **Awaiting approval** page; block access while pending
+- [x] 1.6 System Admin area: separate layout + `system.admin` middleware
+- [x] 1.7 Companies list with tabs (pending / active / rejected / suspended) and search
+- [x] 1.8 Company detail page: info, documents, review history
+- [x] 1.9 Actions: **Approve**, **Reject** (reason), **Request info** (note), **Suspend / Reactivate**, set user limit
+- [x] 1.10 Applicant **edit & resubmit** flow (after rejected / info requested)
+- [x] 1.11 `CompanyProvisioningService` on approval: Company Admin membership, copy role template, default statuses (default statuses and task types are per project, so they are created with projects in Phase 4)
+- [x] 1.12 Emails: registered (to system admins), approved, rejected, info requested
+- [x] 1.13 Block login for users whose only company is suspended
+- [x] 1.14 Tests: registration, approval provisioning, rejected/suspended access
 
 ## Phase 2: Roles & Permissions Engine (4 days)
-- [ ] 2.1 Migrations: `permissions`, `roles`, `role_permission`, `membership_permission_overrides`
-- [ ] 2.2 Seeder: full **permission catalog** (all modules from WORKFLOW Â§4.2)
-- [ ] 2.3 Seeder: **default role template** (Company Admin, HOD, DGM, AGM, DM, PM, TL, Developer, Internal Stakeholder, External Stakeholder) with levels, data scopes, and the default matrix (WORKFLOW Â§4.3)
-- [ ] 2.4 `SetCurrentOrganization` middleware (active company from session; company switcher)
-- [ ] 2.5 `PermissionService`: effective permissions = role âˆª grants âˆ’ revokes, cached per membership
-- [ ] 2.6 Hook into Laravel Gate (`Gate::before`) so `@can('task.assign')` / `$user->can()` work
-- [ ] 2.7 Share permissions with Vue through Inertia props; `can('x')` helper + `v-can` directive
-- [ ] 2.8 **Roles & Permissions matrix page:** grid of modules Ã— roles with checkboxes and bulk select per module
-- [ ] 2.9 Role CRUD: create custom role, set level + data scope, copy from an existing role; lock the Company Admin role
-- [ ] 2.10 System Admin: edit the **default role template**
-- [ ] 2.11 Tests: permission resolution, overrides, cache invalidation
+- [x] 2.1 Migrations: `permissions`, `roles`, `role_permission`, `membership_permission_overrides`
+- [x] 2.2 Seeder: full **permission catalog** (all modules from WORKFLOW Â§4.2)
+- [x] 2.3 Seeder: **default role template** (Company Admin, HOD, DGM, AGM, DM, PM, TL, Developer, Internal Stakeholder, External Stakeholder) with levels, data scopes, and the default matrix (WORKFLOW Â§4.3)
+- [x] 2.4 `SetCurrentOrganization` middleware (active company from session; company switcher)
+- [x] 2.5 `PermissionService`: effective permissions = role âˆª grants âˆ’ revokes, cached per membership
+- [x] 2.6 Hook into Laravel Gate (`Gate::before`) so `@can('task.assign')` / `$user->can()` work
+- [x] 2.7 Share permissions with Vue through Inertia props; `can('x')` helper + `v-can` directive
+- [x] 2.8 **Roles & Permissions matrix page:** grid of modules Ã— roles with checkboxes and bulk select per module
+- [x] 2.9 Role CRUD: create custom role, set level + data scope, copy from an existing role; lock the Company Admin role
+- [x] 2.10 System Admin: edit the **default role template**
+- [x] 2.11 Tests: permission resolution, overrides, cache invalidation
 
 ## Phase 3: People, Hierarchy, Exit & Rehire (6 days) âš‘2
-- [ ] 3.1 Migrations: `departments`, `memberships`, `membership_hierarchy`, `employment_periods`, `invitations`, `teams`, `team_members`
+- [ ] 3.1 Migrations: `departments`, `memberships`, `membership_hierarchy`, `employment_periods`, `invitations`, `teams`, `team_members` (`departments` and `memberships` already exist from Phase 2; still to add: `membership_hierarchy`, `employment_periods`, `invitations`, `teams`, `team_members`)
 - [ ] 3.2 Models + relationships; `Membership` soft deletes; `active()` / `former()` scopes
 - [ ] 3.3 Departments CRUD (assign HOD)
 - [ ] 3.4 `HierarchyService`: set manager, cycle check, rank check (manager must have a lower level number), closure table rebuild
