@@ -1,30 +1,21 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import PageHeader from '@/Components/UI/PageHeader.vue';
+import EmptyState from '@/Components/UI/EmptyState.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import { Head, usePage } from '@inertiajs/vue3';
+
+const page = usePage();
 </script>
 
 <template>
     <Head title="Dashboard" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800"
-            >
-                Dashboard
-            </h2>
-        </template>
+    <AppLayout>
+        <PageHeader :title="`Welcome, ${page.props.auth.user.name}`" subtitle="Your role-based dashboard will appear here." />
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div
-                    class="overflow-hidden bg-white shadow-sm sm:rounded-lg"
-                >
-                    <div class="p-6 text-gray-900">
-                        You're logged in!
-                    </div>
-                </div>
-            </div>
-        </div>
-    </AuthenticatedLayout>
+        <EmptyState
+            title="Nothing to show yet"
+            description="Projects, tasks and progress widgets will be added in the next phases."
+        />
+    </AppLayout>
 </template>

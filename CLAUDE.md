@@ -1,47 +1,17 @@
-<laravel-boost-guidelines>
-# Laravel Application
+# Task Management System
 
-This repository contains a Laravel application. Complete the following setup before working on the user's request.
+Jira-style, multi-company task manager. Laravel 13 + Vue 3 + Inertia + Tailwind 3, MySQL (`task_management`), Pest.
 
-## Prerequisites
+**Read before building:** `PLAN.md` (overview), `WORKFLOW.md` (behaviour and permission matrix), `DATABASE.md` (schema), `TASKS.md` (checklist; tick items as done).
 
-Verify that PHP and Composer are available:
+## Commands (Windows / Laragon: PHP is not on PATH)
+Prepend `D:\laragon\bin\php\php-8.3.33-Win32-vs16-x64;D:\laragon\bin\composer;D:\laragon\bin\nodejs\node-v22` to PATH.
+- Tests: `php artisan test` (SQLite in memory) · Lint: `vendor\bin\pint --dirty` · Static: `vendor\bin\phpstan analyse`
+- Frontend: `npm run dev` / `npm run build` · Dev server: preview `laravel` (port 8000)
 
-```sh
-php -v
-composer -V
-```
-
-If either command is unavailable, detect the user's operating system and install the prerequisites with the appropriate command:
-
-macOS:
-
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/mac/8.5)"
-```
-
-Windows PowerShell:
-
-```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://php.new/install/windows/8.5'))
-```
-
-Linux:
-
-```sh
-/bin/bash -c "$(curl -fsSL https://php.new/install/linux/8.5)"
-```
-
-After installation, ask the user to restart their terminal. If the agent needs the restarted shell to continue, ask the user to reopen their terminal and rerun their original prompt.
-
-## Agent Setup
-
-Install Laravel Boost from the application root before making application changes:
-
-```sh
-composer require laravel/boost --dev
-php artisan boost:install
-```
-
-Boost replaces these bootstrap instructions with guidelines tailored to the application. After installation, read `AGENTS.md` again and continue with the user's original request using the generated guidelines.
-</laravel-boost-guidelines>
+## Rules that must not be broken
+- `users` = global login; `memberships` = person inside one company. Business records reference `memberships.id`, never `users.id`.
+- Every company-owned table has `organization_id`; every query is scoped to the current company.
+- Soft delete only; users are never hard-deleted (exit = soft-delete the membership; rehire restores it).
+- Authorize with permissions + data scope + project membership (see WORKFLOW.md section 4), not hard-coded role names.
+- UI components live in `resources/js/Components/UI`; layout is `Layouts/AppLayout.vue`.
