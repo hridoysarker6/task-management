@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Support\Tenancy\CurrentOrganization;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -41,7 +42,10 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => fn () => $current->membership?->permissionNames() ?? [],
                 'role' => fn () => $current->membership?->role?->name,
             ],
-            'currentOrganization' => fn () => $current->organization?->only(['id', 'name', 'slug']),
+            'currentOrganization' => fn () => $current->organization ? [
+                ...$current->organization->only(['id', 'name', 'slug']),
+                'logo_url' => $current->organization->logo_path ? Storage::disk('public')->url($current->organization->logo_path) : null,
+            ] : null,
             // For the company switcher (only users in more than one company see it).
             'organizations' => fn () => $request->user() && ! $request->user()->is_system_admin
                 ? $request->user()->accessibleMemberships()
@@ -52,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'warning' => fn () => $request->session()->get('warning'),
+                'bulk_failed' => fn () => $request->session()->get('bulk_failed'),
             ],
         ];
     }

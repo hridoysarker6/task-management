@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Attachment;
+use App\Models\Comment;
+use App\Policies\TaskPolicy;
 use App\Support\Tenancy\CurrentOrganization;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
@@ -24,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        // Comments and attachments are authorised by the task policy (who wrote it, who may delete any).
+        Gate::policy(Comment::class, TaskPolicy::class);
+        Gate::policy(Attachment::class, TaskPolicy::class);
 
         // `@can('task.assign')`, `$user->can(...)` and Gate::authorize(...) resolve against the effective
         // permissions of the user's membership in the current company. A miss returns null so

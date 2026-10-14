@@ -144,6 +144,9 @@ class CompanyReviewTest extends TestCase
 
         $this->actingAs($this->admin)->post(route('admin.companies.approve', $organization));
 
+        // The first visit starts the setup wizard; after that the dashboard opens.
+        $this->actingAs($organization->applicant->fresh())->get('/dashboard')->assertRedirect(route('onboarding.show'));
+
         $this->actingAs($organization->applicant->fresh())->get('/dashboard')
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('currentOrganization.id', $organization->id)->where('auth.role', 'Company Admin'));

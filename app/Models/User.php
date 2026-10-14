@@ -90,6 +90,27 @@ class User extends Authenticatable implements MustVerifyEmail
         return $companies->isNotEmpty() && $companies->every(fn (Organization $o) => $o->isSuspended());
     }
 
+    /**
+     * Why this person has no access to a company they used to belong to, e.g.
+     * "Your access to ABC Soft ended on 30 Sep 2026." Null when they never left one.
+     */
+    public function exitMessage(): ?string
+    {
+        $membership = $this->memberships()->onlyTrashed()
+            ->where('status', Membership::EXITED)
+            ->with('organization')
+            ->latest('left_at')
+            ->first();
+
+        if (! $membership || ! $membership->organization) {
+            return null;
+        }
+
+        $date = $membership->left_at?->format('j M Y');
+
+        return "Your access to {$membership->organization->name}".($date ? " ended on {$date}." : ' has ended.');
+    }
+
     /** The company application that is still waiting on this person (pending, info requested or rejected). */
     public function openApplication(): ?Organization
     {

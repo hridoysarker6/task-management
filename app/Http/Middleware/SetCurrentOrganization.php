@@ -38,6 +38,15 @@ class SetCurrentOrganization
                 return redirect()->route('login')->with('error', 'Your company\'s account is suspended. Please contact the platform administrator.');
             }
 
+            // They were removed from every company: say so instead of showing an empty workspace.
+            if (! $user->openApplication() && $message = $user->exitMessage()) {
+                Auth::guard('web')->logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->with('error', $message);
+            }
+
             return $next($request);
         }
 

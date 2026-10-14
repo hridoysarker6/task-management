@@ -100,6 +100,7 @@ class ApplicationFlowTest extends TestCase
         $this->seedRoleTemplate();
         [, $admin] = $this->makeCompany();
 
+        $this->actingAsMember($admin)->get('/dashboard')->assertRedirect(route('onboarding.show'));
         $this->actingAsMember($admin)->get('/dashboard')->assertOk();
         $this->actingAsMember($admin)->get('/awaiting-approval')->assertRedirect(route('dashboard'));
     }

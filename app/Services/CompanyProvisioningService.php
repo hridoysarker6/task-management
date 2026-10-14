@@ -15,7 +15,11 @@ use Illuminate\Support\Facades\DB;
  */
 class CompanyProvisioningService
 {
-    public function __construct(private RoleTemplateService $templates) {}
+    public function __construct(
+        private RoleTemplateService $templates,
+        private EmploymentService $employment,
+        private HierarchyService $hierarchy,
+    ) {}
 
     public function provision(Organization $organization): Membership
     {
@@ -47,6 +51,11 @@ class CompanyProvisioningService
                     'joined_at' => now()->toDateString(),
                 ]);
             }
+
+            if (! $this->employment->current($membership)) {
+                $this->employment->open($membership);
+            }
+            $this->hierarchy->rebuildSubtree($membership);
 
             $applicant->forceFill(['last_organization_id' => $organization->id])->save();
 

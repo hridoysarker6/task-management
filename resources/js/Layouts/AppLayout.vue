@@ -9,14 +9,20 @@ import {
     BellIcon,
     BriefcaseIcon,
     BuildingOffice2Icon,
+    BuildingOfficeIcon,
     ChartBarIcon,
     ChevronUpDownIcon,
     ClipboardDocumentCheckIcon,
+    Cog6ToothIcon,
     HomeIcon,
+    ShareIcon,
+    PlusIcon,
     ShieldCheckIcon,
+    UserGroupIcon,
     UsersIcon,
     XMarkIcon,
 } from '@heroicons/vue/24/outline';
+import CreateTaskModal from '@/Components/Tasks/CreateTaskModal.vue';
 import { usePermissions } from '@/Composables/usePermissions';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -26,20 +32,31 @@ const user = computed(() => page.props.auth.user);
 const sidebarOpen = ref(false);
 const { can } = usePermissions();
 const organizations = computed(() => page.props.organizations ?? []);
+const openCreate = () => window.dispatchEvent(new CustomEvent('create-task'));
 
 // Nav items are added phase by phase. `routeName: null` = not built yet (shown disabled).
 // `permission` hides the item from people who lack it.
 const allNav = [
     { label: 'Dashboard', icon: HomeIcon, routeName: 'dashboard' },
-    { label: 'My Work', icon: ClipboardDocumentCheckIcon, routeName: null },
-    { label: 'Projects', icon: BriefcaseIcon, routeName: null },
-    { label: 'People', icon: UsersIcon, routeName: null },
+    { label: 'My Work', icon: ClipboardDocumentCheckIcon, routeName: 'my-work', permission: 'task.view' },
+    { label: 'Projects', icon: BriefcaseIcon, routeName: 'projects.index', match: 'projects.*', permission: 'project.view' },
+    { label: 'Team', icon: UserGroupIcon, routeName: 'team', permission: 'dashboard.team' },
+    { label: 'People', icon: UsersIcon, routeName: 'people.index', match: 'people.*', permission: 'user.view' },
+    { label: 'Org chart', icon: ShareIcon, routeName: 'orgchart', permission: 'orgchart.view' },
     { label: 'Reports', icon: ChartBarIcon, routeName: null },
-    { label: 'Roles & Permissions', icon: ShieldCheckIcon, routeName: 'roles.index', permission: 'role.view' },
+    { label: 'Company', icon: Cog6ToothIcon, routeName: 'settings.company.edit', match: 'settings.company.*', permission: 'company.view_settings', section: 'Settings' },
+    { label: 'Departments', icon: BuildingOfficeIcon, routeName: 'departments.index', match: 'departments.*', permission: 'department.view' },
+    { label: 'Roles & Permissions', icon: ShieldCheckIcon, routeName: 'roles.index', match: 'roles.*', permission: 'role.view' },
 ];
 const nav = computed(() => allNav.filter((item) => !item.permission || can(item.permission)));
 
-const isActive = (item) => item.routeName && route().current(item.routeName + '*');
+// The first visible item of the settings group gets a small heading above it.
+const sectionStart = computed(() => {
+    const seen = new Set();
+    return new Set(nav.value.filter((i) => i.section && !seen.has(i.section) && seen.add(i.section)).map((i) => i.label));
+});
+
+const isActive = (item) => item.routeName && route().current(item.match ?? item.routeName + '*');
 const linkClass = (item) =>
     item.routeName
         ? isActive(item)
@@ -51,6 +68,7 @@ const linkClass = (item) =>
 <template>
     <div class="min-h-screen bg-gray-50">
         <FlashMessages />
+        <CreateTaskModal v-if="can('task.create')" />
 
         <!-- Mobile backdrop -->
         <div v-if="sidebarOpen" class="fixed inset-0 z-30 bg-gray-900/40 lg:hidden" @click="sidebarOpen = false" />
@@ -64,8 +82,9 @@ const linkClass = (item) =>
         >
             <div class="flex h-16 shrink-0 items-center justify-between px-4">
                 <Link :href="route('dashboard')" class="flex items-center gap-2">
-                    <ApplicationLogo class="h-8 w-8 fill-current text-indigo-600" />
-                    <span class="text-base font-semibold text-gray-900">{{ page.props.appName }}</span>
+                    <img v-if="page.props.currentOrganization?.logo_url" :src="page.props.currentOrganization.logo_url" :alt="page.props.currentOrganization.name" class="h-8 w-8 rounded object-contain" />
+                    <ApplicationLogo v-else class="h-8 w-8 fill-current text-indigo-600" />
+                    <span class="truncate text-base font-semibold text-gray-900">{{ page.props.currentOrganization?.name ?? page.props.appName }}</span>
                 </Link>
                 <button class="rounded-md p-1 text-gray-500 hover:bg-gray-100 lg:hidden" aria-label="Close menu" @click="sidebarOpen = false">
                     <XMarkIcon class="h-5 w-5" />
@@ -74,6 +93,7 @@ const linkClass = (item) =>
 
             <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-2">
                 <template v-for="item in nav" :key="item.label">
+                    <div v-if="sectionStart.has(item.label)" class="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{{ item.section }}</div>
                     <Link
                         v-if="item.routeName"
                         :href="route(item.routeName)"
@@ -90,7 +110,7 @@ const linkClass = (item) =>
                 </template>
             </nav>
 
-            <div class="border-t border-gray-200 p-3 text-xs text-gray-400">v0.1 &middot; Phase 2</div>
+            <div class="border-t border-gray-200 p-3 text-xs text-gray-400">v0.1 &middot; Phase 5</div>
         </aside>
 
         <div class="lg:pl-64">
@@ -122,6 +142,9 @@ const linkClass = (item) =>
                 </div>
 
                 <div class="ml-auto flex items-center gap-2">
+                    <button v-if="can('task.create') && $page.props.currentOrganization" type="button" class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700" @click="openCreate">
+                        <PlusIcon class="h-4 w-4" /> Create
+                    </button>
                     <!-- Notifications (wired up in Phase 10) -->
                     <button class="relative rounded-full p-2 text-gray-500 hover:bg-gray-100" aria-label="Notifications">
                         <BellIcon class="h-5 w-5" />

@@ -65,74 +65,74 @@ References: [PLAN.md](PLAN.md) Â· [WORKFLOW.md](WORKFLOW.md) Â· [DATABASE.md
 - [x] 2.11 Tests: permission resolution, overrides, cache invalidation
 
 ## Phase 3: People, Hierarchy, Exit & Rehire (6 days) âš‘2
-- [ ] 3.1 Migrations: `departments`, `memberships`, `membership_hierarchy`, `employment_periods`, `invitations`, `teams`, `team_members` (`departments` and `memberships` already exist from Phase 2; still to add: `membership_hierarchy`, `employment_periods`, `invitations`, `teams`, `team_members`)
-- [ ] 3.2 Models + relationships; `Membership` soft deletes; `active()` / `former()` scopes
-- [ ] 3.3 Departments CRUD (assign HOD)
-- [ ] 3.4 `HierarchyService`: set manager, cycle check, rank check (manager must have a lower level number), closure table rebuild
-- [ ] 3.5 **Invite user** form: email, role, department, reports-to, internal/external, designation, employee code
-- [ ] 3.6 Invitation email + **Accept invitation** page (new user sets password / existing user logs in)
-- [ ] 3.7 Resend / revoke invitation; expiry after 7 days
-- [ ] 3.8 **Bulk import** users from CSV/Excel with a preview and validation error report
-- [ ] 3.9 Users list (active / invited / former tabs), filters, search, user detail page
-- [ ] 3.10 Edit member: role, department, manager, designation (permission-checked)
-- [ ] 3.11 **Org chart** page (tree, collapsible, open-task count per person)
-- [ ] 3.12 **Offboard** flow: exit type/date/reason â†’ handover screen (reassign tasks, direct reports, PM projects, approvals)
-- [ ] 3.13 Scheduled exits: daily command `members:process-exits`
-- [ ] 3.14 Exit effects: soft delete, revoke sessions, closure rebuild, end project memberships, remove watchers
-- [ ] 3.15 Login message for exited members; redirect to another active company if any
-- [ ] 3.16 **Rehire** flow: detect former member by email â†’ show history â†’ "same person?" â†’ new role/manager â†’ choose old projects
-- [ ] 3.17 "Different person, same email" path: archive the old user, create a new one
-- [ ] 3.18 Employment history section on the profile
-- [ ] 3.19 Safety rules: cannot exit the last Company Admin; must reassign direct reports first; user limit check
-- [ ] 3.20 Company onboarding wizard (profile â†’ departments â†’ roles â†’ invite â†’ hierarchy â†’ first project)
-- [ ] 3.21 Company settings page (logo, timezone, working days, date format)
-- [ ] 3.22 Tests: hierarchy cycles, closure correctness, exit + rehire data, invitation flows
+- [x] 3.1 Migrations: `departments`, `memberships`, `membership_hierarchy`, `employment_periods`, `invitations`, `teams`, `team_members`
+- [x] 3.2 Models + relationships; `Membership` soft deletes; `active()` / `former()` scopes
+- [x] 3.3 Departments CRUD (assign HOD)
+- [x] 3.4 `HierarchyService`: set manager, cycle check, rank check (manager must have a lower level number), closure table rebuild
+- [x] 3.5 **Invite user** form: email, role, department, reports-to, internal/external, designation, employee code
+- [x] 3.6 Invitation email + **Accept invitation** page (new user sets password / existing user logs in)
+- [x] 3.7 Resend / revoke invitation; expiry after 7 days
+- [x] 3.8 **Bulk import** users from CSV/Excel with a preview and validation error report (CSV only for now; Excel files are not supported yet)
+- [x] 3.9 Users list (active / invited / former tabs), filters, search, user detail page
+- [x] 3.10 Edit member: role, department, manager, designation (permission-checked)
+- [x] 3.11 **Org chart** page (tree, collapsible, open-task count per person) (the open-task badge shows once tasks exist in Phase 5)
+- [x] 3.12 **Offboard** flow: exit type/date/reason â†’ handover screen (reassign tasks, direct reports, PM projects, approvals) (direct reports and the projects they manage are handed over; open tasks and timesheet approvals plug into the same screen in Phases 5 and 8)
+- [x] 3.13 Scheduled exits: daily command `members:process-exits`
+- [x] 3.14 Exit effects: soft delete, revoke sessions, closure rebuild, end project memberships, remove watchers (project memberships end through the `MembershipExited` event; task watchers are removed when tasks arrive in Phase 5)
+- [x] 3.15 Login message for exited members; redirect to another active company if any
+- [x] 3.16 **Rehire** flow: detect former member by email â†’ show history â†’ "same person?" â†’ new role/manager â†’ choose old projects
+- [x] 3.17 "Different person, same email" path: archive the old user, create a new one
+- [x] 3.18 Employment history section on the profile
+- [x] 3.19 Safety rules: cannot exit the last Company Admin; must reassign direct reports first; user limit check
+- [x] 3.20 Company onboarding wizard (profile â†’ departments â†’ roles â†’ invite â†’ hierarchy â†’ first project)
+- [x] 3.21 Company settings page (logo, timezone, working days, date format)
+- [x] 3.22 Tests: hierarchy cycles, closure correctness, exit + rehire data, invitation flows
 
 ## Phase 4: Projects (3 days) âš‘3
-- [ ] 4.1 Migrations: `projects`, `project_members`, `project_statuses`, `status_transitions`, `labels`
-- [ ] 4.2 Project CRUD (key, name, department, PM, dates, description) with a unique key per company
-- [ ] 4.3 Projects list (cards/table, filter by status/department, my projects only)
-- [ ] 4.4 Project members management (add/remove, project role, re-add sets `left_at = null`)
-- [ ] 4.5 Default statuses created per project; **workflow editor** (add/rename/reorder/color/category)
-- [ ] 4.6 Optional allowed-transitions editor
-- [ ] 4.7 Project settings: sprints on/off, triage mode, client can see all, allow self-close, progress mode
-- [ ] 4.8 Project status changes: on hold / completed / archived / restore
-- [ ] 4.9 Labels management
-- [ ] 4.10 `ProjectPolicy` + tests
+- [x] 4.1 Migrations: `projects`, `project_members`, `project_statuses`, `status_transitions`, `labels`
+- [x] 4.2 Project CRUD (key, name, department, PM, dates, description) with a unique key per company
+- [x] 4.3 Projects list (cards/table, filter by status/department, my projects only)
+- [x] 4.4 Project members management (add/remove, project role, re-add sets `left_at = null`)
+- [x] 4.5 Default statuses created per project; **workflow editor** (add/rename/reorder/color/category)
+- [x] 4.6 Optional allowed-transitions editor
+- [x] 4.7 Project settings: sprints on/off, triage mode, client can see all, allow self-close, progress mode
+- [x] 4.8 Project status changes: on hold / completed / archived / restore
+- [x] 4.9 Labels management
+- [x] 4.10 `ProjectPolicy` + tests
 
 ## Phase 5: Tasks Core (7 days) âš‘4
-- [ ] 5.1 Migrations: `tasks`, `task_watchers`, `task_links`, `label_task`, `comments`, `comment_mentions`, `attachments`, `task_activities`
-- [ ] 5.2 `TaskNumberService` (row lock on `projects.task_counter`) â†’ keys like `ECP-42`
-- [ ] 5.3 **VisibleTo scope** on Task (own / team / department / organization + project membership + external rules)
-- [ ] 5.4 `TaskPolicy`: view, create, edit_own/any, delete_own/any, assign, change_status, close, reopen, triage
-- [ ] 5.5 **Create task modal** (global + button): project, type, title, description editor, priority, assignee, labels, parent, sprint, points, estimate, dates, attachments
-- [ ] 5.6 Initial status logic (Triage / Backlog / To Do); auto-watch reporter + assignee
-- [ ] 5.7 **Task detail page / side panel:** inline field editing, breadcrumbs (epic â†’ story â†’ subtask)
-- [ ] 5.8 Sub-tasks list + create subtask; epic children with a progress bar
-- [ ] 5.9 Status change with transition and permission checks; `completed_at` handling; close-parent warning
-- [ ] 5.10 Assignment rules (self-assign, assign within scope, PM assigns any member)
-- [ ] 5.11 Comments: create/edit/delete, **Internal/Public** toggle, @mention autocomplete
-- [ ] 5.12 Attachments: upload (size/type limits), preview images, download, delete
-- [ ] 5.13 Task links (blocks / relates / duplicates / clones) with a search picker
-- [ ] 5.14 Watchers: watch/unwatch, list watchers
-- [ ] 5.15 **Activity timeline** (Task observer writes `task_activities` for every change)
-- [ ] 5.16 **Triage queue** page: accept (set type/priority/assignee), reject (reason), ask for info
-- [ ] 5.17 External stakeholder view restrictions (hide internal comments, estimates, work logs)
-- [ ] 5.18 Delete / restore task (soft delete)
-- [ ] 5.19 **My Work** page: assigned to me / reported by me / watching
-- [ ] 5.20 Tests: visibility for **every role** (Dev can't see the other team, DM sees both TLs, external sees only own, â€¦)
+- [x] 5.1 Migrations: `tasks`, `task_watchers`, `task_links`, `label_task`, `comments`, `comment_mentions`, `attachments`, `task_activities`
+- [x] 5.2 `TaskNumberService` (row lock on `projects.task_counter`) â†’ keys like `ECP-42`
+- [x] 5.3 **VisibleTo scope** on Task (own / team / department / organization + project membership + external rules)
+- [x] 5.4 `TaskPolicy`: view, create, edit_own/any, delete_own/any, assign, change_status, close, reopen, triage
+- [x] 5.5 **Create task modal** (global + button): project, type, title, description editor, priority, assignee, labels, parent, sprint, points, estimate, dates, attachments (the sprint field arrives with sprints in Phase 7)
+- [x] 5.6 Initial status logic (Triage / Backlog / To Do); auto-watch reporter + assignee
+- [x] 5.7 **Task detail page / side panel:** inline field editing, breadcrumbs (epic â†’ story â†’ subtask)
+- [x] 5.8 Sub-tasks list + create subtask; epic children with a progress bar
+- [x] 5.9 Status change with transition and permission checks; `completed_at` handling; close-parent warning
+- [x] 5.10 Assignment rules (self-assign, assign within scope, PM assigns any member)
+- [x] 5.11 Comments: create/edit/delete, **Internal/Public** toggle, @mention autocomplete
+- [x] 5.12 Attachments: upload (size/type limits), preview images, download, delete
+- [x] 5.13 Task links (blocks / relates / duplicates / clones) with a search picker
+- [x] 5.14 Watchers: watch/unwatch, list watchers
+- [x] 5.15 **Activity timeline** (Task observer writes `task_activities` for every change)
+- [x] 5.16 **Triage queue** page: accept (set type/priority/assignee), reject (reason), ask for info
+- [x] 5.17 External stakeholder view restrictions (hide internal comments, estimates, work logs)
+- [x] 5.18 Delete / restore task (soft delete)
+- [x] 5.19 **My Work** page: assigned to me / reported by me / watching
+- [x] 5.20 Tests: visibility for **every role** (Dev can't see the other team, DM sees both TLs, external sees only own, â€¦)
 
 ## Phase 6: Board, List & Backlog Views (5 days) âš‘5
-- [ ] 6.1 **Kanban board**: columns = statuses, drag & drop between and within columns (`board_position`)
-- [ ] 6.2 Board filters: assignee avatars, type, priority, label, "only my issues", search
-- [ ] 6.3 Board swimlanes (none / assignee / epic)
-- [ ] 6.4 Card design: key, title, type icon, priority, assignee avatar, points, due date (red if overdue)
-- [ ] 6.5 **List view**: sortable columns, pagination, column picker
-- [ ] 6.6 Advanced filters (status, assignee, reporter, sprint, label, date ranges, overdue)
-- [ ] 6.7 **Saved filters** (private / shared)
-- [ ] 6.8 Bulk actions in the list (assign, status, sprint, label, delete) behind `task.bulk_update`
-- [ ] 6.9 **Team view**: tasks grouped by person for everyone under me
-- [ ] 6.10 Backlog page (rank ordering by drag, `backlog_rank`)
+- [x] 6.1 **Kanban board**: columns = statuses, drag & drop between and within columns (`board_position`)
+- [x] 6.2 Board filters: assignee avatars, type, priority, label, "only my issues", search
+- [x] 6.3 Board swimlanes (none / assignee / epic)
+- [x] 6.4 Card design: key, title, type icon, priority, assignee avatar, points, due date (red if overdue)
+- [x] 6.5 **List view**: sortable columns, pagination, column picker
+- [x] 6.6 Advanced filters (status, assignee, reporter, sprint, label, date ranges, overdue) (sprint filter backend is in; the sprint picker arrives with Phase 7)
+- [x] 6.7 **Saved filters** (private / shared)
+- [x] 6.8 Bulk actions in the list (assign, status, sprint, label, delete) behind `task.bulk_update` (sprint action arrives with Phase 7)
+- [x] 6.9 **Team view**: tasks grouped by person for everyone under me
+- [x] 6.10 Backlog page (rank ordering by drag, `backlog_rank`)
 
 ## Phase 7: Sprints (3 days) âš‘6 â†’ **MVP complete**
 - [ ] 7.1 Migrations: `sprints`, `sprint_task`

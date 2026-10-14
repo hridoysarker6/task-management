@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Support\Tenancy\CurrentOrganization;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,9 +19,27 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $membership = app(CurrentOrganization::class)->membership;
+
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            // Join / exit history in the current company (a rehire adds a new period).
+            'employment' => $membership ? [
+                'company' => $membership->organization->name,
+                'role' => $membership->role->name,
+                'manager' => $membership->manager?->user?->name,
+                'periods' => $membership->employmentPeriods()->with(['role', 'department', 'manager.user'])->get()->map(fn ($p) => [
+                    'id' => $p->id,
+                    'joined_at' => $p->joined_at->toDateString(),
+                    'left_at' => $p->left_at?->toDateString(),
+                    'role' => $p->role?->name,
+                    'department' => $p->department?->name,
+                    'manager' => $p->manager?->user?->name,
+                    'designation' => $p->designation,
+                    'exit_type' => $p->exit_type,
+                ]),
+            ] : null,
         ]);
     }
 

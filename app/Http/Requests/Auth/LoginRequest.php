@@ -64,6 +64,14 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Left every company they belonged to: tell them when their access ended. People who still belong to
+        // another active company just sign in to that one.
+        if (! $user->is_system_admin && $user->accessibleMemberships()->isEmpty() && ! $user->openApplication() && $message = $user->exitMessage()) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages(['email' => $message]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

@@ -98,7 +98,7 @@ class DefaultRoleTemplate
             'task.move_project' => $pm,
             'task.change_status' => $worker,
             'task.close' => $lead,
-            'task.reopen' => $everyone,
+            'task.reopen' => [...$lead, 'internal-stakeholder', 'external-stakeholder'],
             'task.triage' => ['company-admin', 'hod', 'dm', 'project-manager', 'team-lead'],
             'task.delete_any' => ['company-admin', 'hod', 'project-manager'],
             // Comments & attachments
