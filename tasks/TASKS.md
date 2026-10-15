@@ -212,3 +212,44 @@ References: [PLAN.md](PLAN.md) Â· [WORKFLOW.md](WORKFLOW.md) Â· [DATABASE.md
 - [ ] Mobile app / PWA
 - [ ] Integrations: Git commits linked to task keys, Slack/Teams, email-to-task
 - [ ] Billing / subscription plans per company
+
+## Phase 13: Enhancements (planned features, one spec each in `tasks/features/`)
+
+### A. Daily productivity
+- [ ] Inline editing on list and board (High, Medium): `features/2026-10-15-inline-edit.md`
+- [ ] Task side panel (peek without leaving the board) (High, Medium): `features/2026-10-15-task-side-panel.md`
+- [ ] Drag to reassign and re-parent on the board (Medium, Small): `features/2026-10-15-board-drag-reassign.md`
+- [ ] Quick add at the bottom of a column or list (Medium, Small): `features/2026-10-15-quick-add-task.md`
+- [ ] More keyboard shortcuts and a shortcut help sheet (Medium, Small): `features/2026-10-15-keyboard-shortcuts-extended.md`
+
+### B. Collaboration
+- [ ] Real-time updates and presence (Laravel Reverb) (High, Large): `features/2026-10-15-realtime-board-reverb.md`
+- [ ] Richer comments: reactions, threads, paste and drop files (Medium, Medium): `features/2026-10-15-rich-comments.md`
+- [ ] Task templates and recurring tasks (Medium, Large): `features/2026-10-15-task-templates-and-recurring.md`
+- [ ] Duplicate (clone) a task (Low, Small): `features/2026-10-15-clone-task.md`
+- [ ] Email to task (Low, Large): `features/2026-10-15-email-to-task.md`
+
+### C. New views
+- [ ] Calendar view (High, Medium): `features/2026-10-15-calendar-view.md`
+- [ ] Gantt / timeline view (Medium, Large): `features/2026-10-15-gantt-timeline.md`
+- [ ] Workload view (capacity planning) (Medium, Medium): `features/2026-10-15-workload-view.md`
+- [ ] Roadmap view (epics by quarter) (Low, Medium): `features/2026-10-15-roadmap-view.md`
+
+### D. Smart and automation
+- [ ] Automation rules (High, Large): `features/2026-10-15-automation-rules.md`
+- [ ] Custom fields per project (Medium, Large): `features/2026-10-15-custom-fields.md`
+- [ ] Stuck-task and overload alerts (Medium, Medium): `features/2026-10-15-stuck-and-overload-alerts.md`
+
+### E. Personal experience
+- [ ] Dark mode (Medium, Medium): `features/2026-10-15-dark-mode.md`
+- [ ] Favourites and pinned views (Medium, Small): `features/2026-10-15-saved-views-and-favorites.md`
+- [ ] First-login guided tour (Low, Small): `features/2026-10-15-onboarding-tour.md`
+- [ ] Command palette actions (High, Small): `features/2026-10-15-command-palette-actions.md`
+- [ ] Installable app (PWA) and push notifications (Low, Medium): `features/2026-10-15-pwa-and-push.md`
+- [ ] Bangla language support (Medium, Large): `features/2026-10-15-bangla-language.md`
+
+### F. Integrations and reports
+- [ ] Git commits and pull requests linked to tasks (Medium, Large): `features/2026-10-15-git-integration.md`
+- [ ] Slack and Microsoft Teams notifications (Medium, Medium): `features/2026-10-15-slack-teams-notifications.md`
+- [ ] Scheduled report emails (Medium, Medium): `features/2026-10-15-scheduled-report-emails.md`
+- [ ] Subscription plans and billing per company (Low, Large): `features/2026-10-15-billing-plans.md`

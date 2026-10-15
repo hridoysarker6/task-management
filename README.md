@@ -10,7 +10,7 @@ Built with Laravel 13, Vue 3, Inertia, Tailwind CSS and Headless UI. MySQL for d
 - `PLAN.md` - overview and architecture
 - `WORKFLOW.md` - behaviour and the permission matrix
 - `DATABASE.md` - schema
-- `TASKS.md` - build checklist
+- `tasks/` - the roadmap (`tasks/TASKS.md`), the feature spec template and one spec per feature (`tasks/features/`)
 
 ## Run it (Windows / Laragon)
 
