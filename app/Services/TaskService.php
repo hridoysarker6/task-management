@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\ProjectStatus;
 use App\Models\Scopes\OrganizationScope;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Support\HtmlSanitizer;
 use Illuminate\Support\Facades\DB;
@@ -53,9 +54,15 @@ class TaskService
         $this->assertCanAssign($project, $actor, $assignee);
         $labels = $this->labelIds($project, $data['labels'] ?? []);
         $this->assertDates($data['start_date'] ?? null, $data['due_date'] ?? null);
+        $chosen = $this->chosenStatus($project, $data['status_id'] ?? null);
+        $sprint = $this->chosenSprint($project, $data['sprint_id'] ?? null);
 
-        $task = DB::transaction(function () use ($project, $actor, $data, $type, $parent, $assignee, $labels) {
-            $status = $this->initialStatus($project, $actor);
+        $task = DB::transaction(function () use ($project, $actor, $data, $type, $parent, $assignee, $labels, $chosen, $sprint) {
+            $status = $this->initialStatus($project, $actor, $sprint !== null);
+            // A column or list that asked for a status gets it, except for requests that must go through triage first.
+            if ($chosen && $status->category !== 'triage') {
+                $status = $chosen;
+            }
 
             $task = Task::withoutGlobalScope(OrganizationScope::class)->create([
                 'organization_id' => $project->organization_id,
@@ -89,12 +96,52 @@ class TaskService
                 $this->watch($task, $assignee);
             }
 
+            if ($sprint) {
+                app(SprintService::class)->addTask($sprint, $task);
+            }
+
             return $task->load('project', 'status');
         });
 
         app(Notifier::class)->taskCreated($task);
 
         return $task;
+    }
+
+    /**
+     * The status a caller asked a new task to start in (a board column), or null for "the usual one".
+     *
+     * @throws ValidationException
+     */
+    private function chosenStatus(Project $project, mixed $id): ?ProjectStatus
+    {
+        if ($id === null || $id === '') {
+            return null;
+        }
+
+        $status = ProjectStatus::where('project_id', $project->id)->find($id);
+
+        if (! $status || in_array($status->category, ['triage', 'cancelled'], true)) {
+            throw ValidationException::withMessages(['status_id' => 'Choose a status of this project that tasks can start in.']);
+        }
+
+        return $status;
+    }
+
+    /**
+     * The sprint a new task should join, or null. Only a planned or active sprint of a project that runs sprints.
+     *
+     * @throws ValidationException
+     */
+    private function chosenSprint(Project $project, mixed $id): ?Sprint
+    {
+        if ($id === null || $id === '') {
+            return null;
+        }
+
+        $sprint = $project->uses_sprints ? Sprint::where('project_id', $project->id)->open()->find($id) : null;
+
+        return $sprint ?? throw ValidationException::withMessages(['sprint_id' => 'Choose a planned or active sprint of this project.']);
     }
 
     /** Which status a new task starts in: Triage for requests, Backlog (the starting status) for team work. */

@@ -1,6 +1,6 @@
 # Feature: More keyboard shortcuts and a shortcut help sheet
 
-- **Status:** Planned
+- **Status:** Done (2026-10-15)
 - **Requested:** 2026-10-15
 - **Priority:** Medium · **Effort:** Small
 - **Depends on:** none
@@ -63,17 +63,17 @@ Risks and how they are handled:
 
 Order: schema, services and rules, permissions and policies, routes and controllers, screens, notifications and audit, seed data, tests, docs.
 
-- [ ] 6.1 `useShortcuts` composable with guards and a registry
-- [ ] 6.2 Selection model for list rows and board cards
-- [ ] 6.3 Implement J/K/Enter, A/S/P, G-sequences
-- [ ] 6.4 `ShortcutHelp.vue` opened by `?` and a link in the user menu
-- [ ] 6.5 Tests (frontend logic by a small unit test of the registry or manual checklist)
-- [ ] 6.6 Docs: WORKFLOW section 12
+- [x] 6.1 `useShortcuts` composable with guards and a registry
+- [x] 6.2 Selection model for list rows and board cards
+- [x] 6.3 Implement J/K/Enter, A/S/P, G-sequences
+- [x] 6.4 `ShortcutHelp.vue` opened by `?` and a link in the user menu
+- [x] 6.5 Tests (frontend logic by a small unit test of the registry or manual checklist)
+- [x] 6.6 Docs: WORKFLOW section 12
 
-## 7. Verification (fill in when done)
+## 7. Verification
 
-- New tests:
-- Full test run: `php artisan test`
-- `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse`, `npm run build`
-- Checked in the browser (pages and roles):
-- Known gaps / follow-ups:
+- Built as planned, with these notes: One composable (`useShortcuts`) owns every shortcut, the selected task and the help list. Rows and cards expose `data-task-key`; inline fields start editing when a shortcut sends them a `task-inline` event.
+- New tests: No automated frontend tests in this project; checked by hand in the browser (J/K selection, `?` help dialog).
+- Full test run, `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse` and `npm run build`: passed (see the group report).
+- Checked in the browser: list inline edit (title), side panel open and close with `?task=` in the address, J/K selection, shortcut help, quick add with `@name !4`.
+- Known gaps / follow-ups: dragging a card across swimlanes was verified by tests and not by an automated browser drag.

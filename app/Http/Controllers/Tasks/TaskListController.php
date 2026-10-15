@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Services\BulkTaskService;
 use App\Services\TaskService;
+use App\Support\TaskAbilities;
 use App\Support\TaskFilters;
 use App\Support\TaskPresenter;
 use Illuminate\Http\RedirectResponse;
@@ -34,10 +35,12 @@ class TaskListController extends ProjectViewController
 
         $query = TaskFilters::apply(Task::visibleTo($me)->where('project_id', $project->id), $filters, $me);
 
+        $abilities = new TaskAbilities($me, $project);
+
         $rows = TaskFilters::sort($query, $sort, $dir)
             ->with(['project', 'status', 'assignee.user:id,name', 'reporter.user:id,name', 'labels', 'sprint:id,name'])
             ->paginate($perPage)->withQueryString()
-            ->through(fn (Task $t) => TaskPresenter::row($t, ! $me->isExternal()) + [
+            ->through(fn (Task $t) => TaskPresenter::row($t, ! $me->isExternal()) + ['can' => $abilities->of($t)] + [
                 'reporter' => ['id' => $t->reporter_id, 'name' => $t->reporter->user->name],
                 'labels' => $t->labels->map->only(['id', 'name', 'color'])->values(),
                 'sprint' => $t->sprint ? ['id' => $t->sprint->id, 'name' => $t->sprint->name] : null,
@@ -58,6 +61,7 @@ class TaskListController extends ProjectViewController
             'options' => $this->filterOptions($project),
             'savedFilters' => $this->savedFilters($project, 'list'),
             'canBulk' => $canBulk,
+            'assignees' => $this->assigneeChoices($project),
             'bulk' => $canBulk ? ['assignees' => $tasks->assigneeOptions($project, $me)] : null,
             'canCreate' => Gate::allows('createTask', $project),
             'showEffort' => ! $me->isExternal(),

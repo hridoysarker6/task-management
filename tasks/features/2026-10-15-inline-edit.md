@@ -1,6 +1,6 @@
 # Feature: Inline editing on list and board
 
-- **Status:** Planned
+- **Status:** Done (2026-10-15)
 - **Requested:** 2026-10-15
 - **Priority:** High · **Effort:** Medium
 - **Depends on:** none
@@ -70,18 +70,18 @@ Risks and how they are handled:
 
 Order: schema, services and rules, permissions and policies, routes and controllers, screens, notifications and audit, seed data, tests, docs.
 
-- [ ] 6.1 Endpoint `PATCH tasks/{task}/field` with a field whitelist and per-field policy
-- [ ] 6.2 `InlineField.vue` component (text, number, date, select, people picker) with saving and error states
-- [ ] 6.3 Wire into list columns (title, status, assignee, priority, due, points)
-- [ ] 6.4 Wire into board card (priority, assignee, due date)
-- [ ] 6.5 Keyboard: Enter saves, Esc cancels, Tab moves to next cell
-- [ ] 6.6 Tests: each field, each refusal (archived, scope, workflow), external stakeholder, tenant isolation
-- [ ] 6.7 Seed: nothing new; docs: WORKFLOW 6.5 note
+- [x] 6.1 Endpoint `PATCH tasks/{task}/field` with a field whitelist and per-field policy
+- [x] 6.2 `InlineField.vue` component (text, number, date, select, people picker) with saving and error states
+- [x] 6.3 Wire into list columns (title, status, assignee, priority, due, points)
+- [x] 6.4 Wire into board card (priority, assignee, due date)
+- [x] 6.5 Keyboard: Enter saves, Esc cancels, Tab moves to next cell
+- [x] 6.6 Tests: each field, each refusal (archived, scope, workflow), external stakeholder, tenant isolation
+- [x] 6.7 Seed: nothing new; docs: WORKFLOW 6.5 note
 
-## 7. Verification (fill in when done)
+## 7. Verification
 
-- New tests:
-- Full test run: `php artisan test`
-- `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse`, `npm run build`
-- Checked in the browser (pages and roles):
-- Known gaps / follow-ups:
+- Built as planned, with these notes: Reused the existing endpoints (`PATCH tasks/{task}`, `POST tasks/{task}/assign`, `POST tasks/{task}/status`) instead of a new `tasks/{task}/field` route: no new rule and no second place to authorize. The list and board now send a per-task `can` flag (`TaskAbilities`, one query per page instead of one per task) and the assignable people.
+- New tests: DailyProductivityTest: ability parity with the policy for six roles, archived project, list/board flags and assignee choices, developer refused, each field saves, refused save changes nothing.
+- Full test run, `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse` and `npm run build`: passed (see the group report).
+- Checked in the browser: list inline edit (title), side panel open and close with `?task=` in the address, J/K selection, shortcut help, quick add with `@name !4`.
+- Known gaps / follow-ups: dragging a card across swimlanes was verified by tests and not by an automated browser drag.

@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\SavedFilter;
 use App\Models\Sprint;
 use App\Models\Task;
+use App\Services\TaskService;
 use App\Support\TaskFilters;
 use Illuminate\Http\Request;
 
@@ -45,6 +46,16 @@ abstract class ProjectViewController extends ProjectBaseController
             'priorities' => collect(Task::PRIORITIES)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values(),
             'meId' => $me->id,
         ];
+    }
+
+    /**
+     * The people the viewer may assign tasks of this project to (inline pickers on the list and board).
+     *
+     * @return list<array{id:int,name:string,role:string}>
+     */
+    protected function assigneeChoices(Project $project): array
+    {
+        return app(TaskService::class)->assigneeOptions($project, $this->current->membership);
     }
 
     /** @return list<array<string, mixed>> */

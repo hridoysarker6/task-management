@@ -2,7 +2,9 @@
 import InputError from '@/Components/InputError.vue';
 import Modal from '@/Components/Modal.vue';
 import ProjectHeader from '@/Components/Projects/ProjectHeader.vue';
+import QuickAdd from '@/Components/Tasks/QuickAdd.vue';
 import TaskBits from '@/Components/Tasks/TaskBits.vue';
+import TaskLink from '@/Components/Tasks/TaskLink.vue';
 import Avatar from '@/Components/UI/Avatar.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import Btn from '@/Components/UI/Btn.vue';
@@ -167,7 +169,7 @@ const createTask = () => window.dispatchEvent(new CustomEvent('create-task', { d
                         <template #item="{ element: t }">
                             <div class="flex cursor-grab items-center gap-2 px-4 py-2 text-sm active:cursor-grabbing" :data-task="t.key">
                                 <TaskBits kind="type" :value="t.type" />
-                                <Link :href="route('tasks.show', t.key)" class="font-mono text-xs font-semibold text-indigo-700 hover:underline" draggable="false">{{ t.key }}</Link>
+                                <TaskLink :task-key="t.key" class="font-mono text-xs font-semibold text-indigo-700 hover:underline">{{ t.key }}</TaskLink>
                                 <span class="min-w-0 flex-1 truncate text-gray-900">{{ t.title }}</span>
                                 <TaskBits kind="status" :value="t.status" />
                                 <span v-if="t.story_points !== null" class="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600" title="Story points">{{ t.story_points }}</span>
@@ -178,6 +180,7 @@ const createTask = () => window.dispatchEvent(new CustomEvent('create-task', { d
                             <p v-if="!lists[s.id]?.length" class="px-4 py-3 text-sm text-gray-400">{{ canPlan ? 'Drag tasks here from the backlog.' : 'No tasks in this sprint.' }}</p>
                         </template>
                     </draggable>
+                    <div v-if="canPlan && canCreateTask" class="px-3 pb-3"><QuickAdd :project-id="project.id" :sprint-id="s.id" :label="`Add to ${s.name}`" /></div>
                 </section>
 
                 <section v-if="completed.length" class="rounded-xl border border-gray-200 bg-white">
@@ -202,7 +205,7 @@ const createTask = () => window.dispatchEvent(new CustomEvent('create-task', { d
                     <template #item="{ element: t }">
                         <div class="flex cursor-grab items-center gap-2 px-4 py-2 text-sm active:cursor-grabbing" :data-task="t.key">
                             <TaskBits kind="type" :value="t.type" />
-                            <Link :href="route('tasks.show', t.key)" class="font-mono text-xs font-semibold text-indigo-700 hover:underline" draggable="false">{{ t.key }}</Link>
+                            <TaskLink :task-key="t.key" class="font-mono text-xs font-semibold text-indigo-700 hover:underline">{{ t.key }}</TaskLink>
                             <span class="min-w-0 flex-1 truncate text-gray-900">{{ t.title }}</span>
                             <TaskBits kind="priority" :value="t.priority" />
                             <span v-if="t.story_points !== null" class="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600" title="Story points">{{ t.story_points }}</span>
@@ -212,6 +215,7 @@ const createTask = () => window.dispatchEvent(new CustomEvent('create-task', { d
                         <p v-if="!lists.backlog?.length" class="px-4 py-3 text-sm text-gray-400">Nothing waiting. New tasks appear here.</p>
                     </template>
                 </draggable>
+                <div v-if="canCreateTask && !readOnly" class="px-3 pb-3"><QuickAdd :project-id="project.id" label="Add to the backlog" /></div>
             </section>
         </div>
 

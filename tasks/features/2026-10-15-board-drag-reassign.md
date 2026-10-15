@@ -1,6 +1,6 @@
 # Feature: Drag to reassign and re-parent on the board
 
-- **Status:** Planned
+- **Status:** Done (2026-10-15)
 - **Requested:** 2026-10-15
 - **Priority:** Medium · **Effort:** Small
 - **Depends on:** none
@@ -67,15 +67,15 @@ Risks and how they are handled:
 
 Order: schema, services and rules, permissions and policies, routes and controllers, screens, notifications and audit, seed data, tests, docs.
 
-- [ ] 6.1 Extend `BoardService::moveCard` and validation for lane changes
-- [ ] 6.2 Board.vue: send lane identity on drop and roll back on refusal
-- [ ] 6.3 Tests: assign via lane, epic via lane, refusals, unassigned/no-epic lanes, plain drop unchanged
-- [ ] 6.4 Docs: WORKFLOW 6.5
+- [x] 6.1 Extend `BoardService::moveCard` and validation for lane changes
+- [x] 6.2 Board.vue: send lane identity on drop and roll back on refusal
+- [x] 6.3 Tests: assign via lane, epic via lane, refusals, unassigned/no-epic lanes, plain drop unchanged
+- [x] 6.4 Docs: WORKFLOW 6.5
 
-## 7. Verification (fill in when done)
+## 7. Verification
 
-- New tests:
-- Full test run: `php artisan test`
-- `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse`, `npm run build`
-- Checked in the browser (pages and roles):
-- Known gaps / follow-ups:
+- Built as planned, with these notes: `tasks.move` takes optional `assignee_id` and `parent_id`; the whole drop runs in one transaction.
+- New tests: DailyProductivityTest: assign by lane, unassigned lane, all-or-nothing on a refused move, assign right and scope, epic lane, sub-task and story-child refusals, plain drop unchanged.
+- Full test run, `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse` and `npm run build`: passed (see the group report).
+- Checked in the browser: list inline edit (title), side panel open and close with `?task=` in the address, J/K selection, shortcut help, quick add with `@name !4`.
+- Known gaps / follow-ups: dragging a card across swimlanes was verified by tests and not by an automated browser drag.

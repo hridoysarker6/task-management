@@ -16,6 +16,7 @@ use App\Services\AttachmentService;
 use App\Services\ProgressService;
 use App\Services\TaskService;
 use App\Services\WorkLogService;
+use App\Support\QuickAddParser;
 use App\Support\TaskPresenter;
 use App\Support\Tenancy\CurrentOrganization;
 use Illuminate\Http\JsonResponse;
@@ -32,7 +33,8 @@ class TaskController extends Controller
 
     // --- the task page ---------------------------------------------------------------------------
 
-    public function show(Task $task, ProgressService $progress): Response
+    /** The task page; with ?panel=1 the same data as JSON, for the side panel. */
+    public function show(Request $request, Task $task, ProgressService $progress): Response|JsonResponse
     {
         abort_if($task->deleted_at !== null, 404);
         Gate::authorize('view', $task);
@@ -50,7 +52,7 @@ class TaskController extends Controller
 
         $links = $this->links($task, $me);
 
-        return Inertia::render('Tasks/Show', [
+        $props = [
             'task' => [
                 'id' => $task->id,
                 'key' => $task->key_label,
@@ -125,7 +127,9 @@ class TaskController extends Controller
                 'mentionable' => $external ? [] : $this->mentionable($project),
             ],
             'isInTriage' => $task->status->category === 'triage',
-        ]);
+        ];
+
+        return $request->boolean('panel') ? response()->json($props) : Inertia::render('Tasks/Show', $props);
     }
 
     // --- create ----------------------------------------------------------------------------------
@@ -209,6 +213,44 @@ class TaskController extends Controller
             'maxFileMb' => AttachmentService::MAX_KB / 1024,
             'extensions' => AttachmentService::EXTENSIONS,
         ]);
+    }
+
+    /**
+     * Quick add: one line of text becomes a task in a given column or sprint. The line may carry @person, !priority and #label.
+     * Answers with JSON so the box can stay open for the next one.
+     */
+    public function quick(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'project_id' => ['required', 'integer'],
+            'text' => ['required', 'string', 'max:400'],
+            'status_id' => ['nullable', 'integer'],
+            'sprint_id' => ['nullable', 'integer'],
+        ]);
+
+        $me = $this->current->membership;
+        $project = Project::visibleTo($me)->findOrFail($data['project_id']);
+        Gate::authorize('createTask', $project);
+
+        // Planning into a sprint is a sprint action.
+        if (! empty($data['sprint_id'])) {
+            Gate::authorize('sprint.edit');
+        }
+
+        $people = $me->isExternal() ? [] : $this->tasks->assigneeOptions($project, $me);
+        $labels = Label::where('project_id', $project->id)->get(['id', 'name'])->map->only(['id', 'name'])->all();
+        $line = QuickAddParser::parse($data['text'], $people, $labels);
+
+        $task = $this->tasks->create($project, $me, [
+            'title' => $line['title'],
+            'assignee_id' => $line['assignee_id'],
+            'priority' => $line['priority'],
+            'labels' => $line['labels'],
+            'status_id' => $data['status_id'] ?? null,
+            'sprint_id' => $data['sprint_id'] ?? null,
+        ]);
+
+        return response()->json(['ok' => true, 'key' => $task->key_label, 'title' => $task->title, 'triage' => $task->status->category === 'triage']);
     }
 
     public function store(Request $request, AttachmentService $attachments): RedirectResponse

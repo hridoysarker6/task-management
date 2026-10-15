@@ -1,16 +1,21 @@
 <script setup>
 import ProjectHeader from '@/Components/Projects/ProjectHeader.vue';
+import InlineField from '@/Components/Tasks/InlineField.vue';
+import QuickAdd from '@/Components/Tasks/QuickAdd.vue';
 import TaskBits from '@/Components/Tasks/TaskBits.vue';
 import TaskFilterBar from '@/Components/Tasks/TaskFilterBar.vue';
+import TaskLink from '@/Components/Tasks/TaskLink.vue';
 import Avatar from '@/Components/UI/Avatar.vue';
 import Btn from '@/Components/UI/Btn.vue';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog.vue';
 import EmptyState from '@/Components/UI/EmptyState.vue';
 import Pagination from '@/Components/UI/Pagination.vue';
+import { assignTask, moveTask, patchTask } from '@/Composables/useTaskEdit';
+import { clearSelectable, isSelected, setSelectable } from '@/Composables/useShortcuts';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ArrowDownIcon, ArrowUpIcon, PlusIcon, ViewColumnsIcon } from '@heroicons/vue/24/outline';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
     project: { type: Object, required: true },
@@ -21,6 +26,7 @@ const props = defineProps({
     perPage: Number,
     perPageOptions: Array,
     options: { type: Object, required: true },
+    assignees: { type: Array, default: () => [] },
     savedFilters: { type: Array, default: () => [] },
     canBulk: Boolean,
     bulk: Object,
@@ -84,6 +90,19 @@ const sortBy = (key) => visit({ sort: key, dir: props.sort === key && props.dir 
 // --- bulk actions -------------------------------------------------------------------------------
 const selected = ref([]);
 const rows = computed(() => props.tasks.data);
+
+// --- inline editing: the choices each select offers ------------------------------------------------
+const statusChoices = computed(() => props.options.statuses.map((s) => ({ value: s.id, label: s.name })));
+const priorityChoices = computed(() => props.options.priorities.map((p) => ({ value: p.value, label: p.label })));
+const assigneeChoices = (t) => {
+    const list = props.assignees.map((p) => ({ value: p.id, label: p.name }));
+    if (t.assignee && !list.some((o) => o.value === t.assignee.id)) list.unshift({ value: t.assignee.id, label: t.assignee.name });
+    return [{ value: null, label: 'Unassigned' }, ...list];
+};
+
+// J / K move through these rows; Enter opens the selected one.
+watch(() => rows.value.map((t) => t.key), setSelectable, { immediate: true });
+onBeforeUnmount(clearSelectable);
 const allOn = computed(() => rows.value.length > 0 && rows.value.every((t) => selected.value.includes(t.id)));
 const toggleAll = () => (selected.value = allOn.value ? [] : rows.value.map((t) => t.id));
 
@@ -220,25 +239,39 @@ const create = () => window.dispatchEvent(new CustomEvent('create-task', { detai
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <tr v-for="t in rows" :key="t.id" :class="selected.includes(t.id) ? 'bg-indigo-50/50' : 'hover:bg-gray-50'">
+                        <tr v-for="t in rows" :key="t.id" :data-task-key="t.key" :class="isSelected(t.key) ? 'bg-violet-50 ring-1 ring-inset ring-violet-300' : selected.includes(t.id) ? 'bg-indigo-50/50' : 'hover:bg-gray-50'">
                             <td v-if="canBulk" class="px-3 py-2"><input v-model="selected" type="checkbox" :value="t.id" :aria-label="`Select ${t.key}`" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" /></td>
                             <td v-for="c in visible" :key="c.key" class="px-3 py-2 align-middle" :class="c.key === 'title' ? 'max-w-md' : 'whitespace-nowrap'">
-                                <Link v-if="c.key === 'key'" :href="route('tasks.show', t.key)" class="font-mono font-semibold text-indigo-700 hover:underline">{{ t.key }}</Link>
-                                <Link v-else-if="c.key === 'title'" :href="route('tasks.show', t.key)" class="block truncate text-gray-900 hover:text-indigo-600" :title="t.title">{{ t.title }}</Link>
+                                <TaskLink v-if="c.key === 'key'" :task-key="t.key" class="font-mono font-semibold text-indigo-700 hover:underline">{{ t.key }}</TaskLink>
+                                <InlineField v-else-if="c.key === 'title'" :model-value="t.title" type="text" :can="t.can.update" :label="`Title of ${t.key}`" :save="(v) => patchTask(t.key, { title: v })" :task-key="t.key" field="title" width-class="w-full max-w-md">
+                                    <template #display><span class="block truncate text-gray-900" :title="t.title">{{ t.title }}</span></template>
+                                </InlineField>
                                 <TaskBits v-else-if="c.key === 'type'" kind="type" :value="t.type" />
-                                <TaskBits v-else-if="c.key === 'status'" kind="status" :value="t.status" />
+                                <InlineField v-else-if="c.key === 'status'" :model-value="t.status?.id" type="select" :options="statusChoices" :can="t.can.status" :label="`Status of ${t.key}`" :save="(v) => moveTask(t.key, v)" :task-key="t.key" field="status">
+                                    <template #display><TaskBits kind="status" :value="t.status" /></template>
+                                </InlineField>
                                 <span v-else-if="c.key === 'sprint'" class="text-gray-600">{{ t.sprint?.name ?? '—' }}</span>
-                                <TaskBits v-else-if="c.key === 'priority'" kind="priority" :value="t.priority" />
-                                <span v-else-if="c.key === 'assignee'" class="inline-flex items-center gap-2">
-                                    <template v-if="t.assignee"><Avatar :name="t.assignee.name" size="sm" /> {{ t.assignee.name }}</template>
-                                    <span v-else class="text-gray-400">Unassigned</span>
-                                </span>
+                                <InlineField v-else-if="c.key === 'priority'" :model-value="t.priority" type="select" :options="priorityChoices" :can="t.can.update" :label="`Priority of ${t.key}`" :save="(v) => patchTask(t.key, { priority: v })" :task-key="t.key" field="priority">
+                                    <template #display><TaskBits kind="priority" :value="t.priority" /></template>
+                                </InlineField>
+                                <InlineField v-else-if="c.key === 'assignee'" :model-value="t.assignee?.id ?? null" type="select" :options="assigneeChoices(t)" :can="t.can.assign" :label="`Assignee of ${t.key}`" :save="(v) => assignTask(t.key, v)" :task-key="t.key" field="assignee">
+                                    <template #display>
+                                        <span class="inline-flex items-center gap-2">
+                                            <template v-if="t.assignee"><Avatar :name="t.assignee.name" size="sm" /> {{ t.assignee.name }}</template>
+                                            <span v-else class="text-gray-400">Unassigned</span>
+                                        </span>
+                                    </template>
+                                </InlineField>
                                 <span v-else-if="c.key === 'reporter'">{{ t.reporter.name }}</span>
                                 <span v-else-if="c.key === 'labels'" class="flex gap-1">
                                     <span v-for="l in t.labels" :key="l.id" class="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white" :style="{ backgroundColor: l.color }">{{ l.name }}</span>
                                 </span>
-                                <span v-else-if="c.key === 'story_points'">{{ t.story_points ?? '—' }}</span>
-                                <span v-else-if="c.key === 'due_date'" :class="t.overdue ? 'font-medium text-red-600' : ''">{{ fmt(t.due_date) }}</span>
+                                <InlineField v-else-if="c.key === 'story_points'" :model-value="t.story_points" type="number" min="0" step="0.5" :can="t.can.update" :label="`Story points of ${t.key}`" :save="(v) => patchTask(t.key, { story_points: v })" :task-key="t.key" field="points">
+                                    <template #display><span>{{ t.story_points ?? '—' }}</span></template>
+                                </InlineField>
+                                <InlineField v-else-if="c.key === 'due_date'" :model-value="t.due_date" type="date" :can="t.can.update" :label="`Due date of ${t.key}`" :save="(v) => patchTask(t.key, { due_date: v })" :task-key="t.key" field="due">
+                                    <template #display><span :class="t.overdue ? 'font-medium text-red-600' : ''">{{ fmt(t.due_date) }}</span></template>
+                                </InlineField>
                                 <span v-else-if="c.key === 'created_at'">{{ fmt(t.created_at) }}</span>
                                 <span v-else-if="c.key === 'updated_at'">{{ fmt(t.updated_at) }}</span>
                             </td>
@@ -246,6 +279,8 @@ const create = () => window.dispatchEvent(new CustomEvent('create-task', { detai
                     </tbody>
                 </table>
             </div>
+
+            <div v-if="canCreate && !project.is_archived" class="mt-3 max-w-md"><QuickAdd :project-id="project.id" /></div>
 
             <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <Pagination :links="tasks.links" />

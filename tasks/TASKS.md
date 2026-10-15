@@ -216,11 +216,11 @@ References: [PLAN.md](PLAN.md) Â· [WORKFLOW.md](WORKFLOW.md) Â· [DATABASE.md
 ## Phase 13: Enhancements (planned features, one spec each in `tasks/features/`)
 
 ### A. Daily productivity
-- [ ] Inline editing on list and board (High, Medium): `features/2026-10-15-inline-edit.md`
-- [ ] Task side panel (peek without leaving the board) (High, Medium): `features/2026-10-15-task-side-panel.md`
-- [ ] Drag to reassign and re-parent on the board (Medium, Small): `features/2026-10-15-board-drag-reassign.md`
-- [ ] Quick add at the bottom of a column or list (Medium, Small): `features/2026-10-15-quick-add-task.md`
-- [ ] More keyboard shortcuts and a shortcut help sheet (Medium, Small): `features/2026-10-15-keyboard-shortcuts-extended.md`
+- [x] Inline editing on list and board (High, Medium): `features/2026-10-15-inline-edit.md`
+- [x] Task side panel (peek without leaving the board) (High, Medium): `features/2026-10-15-task-side-panel.md`
+- [x] Drag to reassign and re-parent on the board (Medium, Small): `features/2026-10-15-board-drag-reassign.md`
+- [x] Quick add at the bottom of a column or list (Medium, Small): `features/2026-10-15-quick-add-task.md`
+- [x] More keyboard shortcuts and a shortcut help sheet (Medium, Small): `features/2026-10-15-keyboard-shortcuts-extended.md`
 
 ### B. Collaboration
 - [ ] Real-time updates and presence (Laravel Reverb) (High, Large): `features/2026-10-15-realtime-board-reverb.md`

@@ -1,6 +1,6 @@
 # Feature: Quick add at the bottom of a column or list
 
-- **Status:** Planned
+- **Status:** Done (2026-10-15)
 - **Requested:** 2026-10-15
 - **Priority:** Medium · **Effort:** Small
 - **Depends on:** none
@@ -65,17 +65,17 @@ Risks and how they are handled:
 
 Order: schema, services and rules, permissions and policies, routes and controllers, screens, notifications and audit, seed data, tests, docs.
 
-- [ ] 6.1 `TaskService::create` options for status and sprint
-- [ ] 6.2 Quick-add endpoint and validation
-- [ ] 6.3 `QuickAdd.vue` component with Enter/Esc and token parsing
-- [ ] 6.4 Add to board columns, backlog and sprint panels
-- [ ] 6.5 Tests: status per place, sprint membership, archived refusal, no permission, tenant isolation
-- [ ] 6.6 Docs: WORKFLOW 6.1
+- [x] 6.1 `TaskService::create` options for status and sprint
+- [x] 6.2 Quick-add endpoint and validation
+- [x] 6.3 `QuickAdd.vue` component with Enter/Esc and token parsing
+- [x] 6.4 Add to board columns, backlog and sprint panels
+- [x] 6.5 Tests: status per place, sprint membership, archived refusal, no permission, tenant isolation
+- [x] 6.6 Docs: WORKFLOW 6.1
 
-## 7. Verification (fill in when done)
+## 7. Verification
 
-- New tests:
-- Full test run: `php artisan test`
-- `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse`, `npm run build`
-- Checked in the browser (pages and roles):
-- Known gaps / follow-ups:
+- Built as planned, with these notes: New `POST tasks/quick` (JSON). `TaskService::create` accepts `status_id` and `sprint_id`; `QuickAddParser` reads `@name`, `!priority` and `#label`.
+- New tests: DailyProductivityTest: column status, default status, shortcuts, sprint (needs the sprint right), bad status / foreign sprint / archived, missing title and no project access, client still goes to triage, parser edge cases.
+- Full test run, `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse` and `npm run build`: passed (see the group report).
+- Checked in the browser: list inline edit (title), side panel open and close with `?task=` in the address, J/K selection, shortcut help, quick add with `@name !4`.
+- Known gaps / follow-ups: dragging a card across swimlanes was verified by tests and not by an automated browser drag.

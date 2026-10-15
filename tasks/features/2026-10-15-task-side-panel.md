@@ -1,6 +1,6 @@
 # Feature: Task side panel (peek without leaving the board)
 
-- **Status:** Planned
+- **Status:** Done (2026-10-15)
 - **Requested:** 2026-10-15
 - **Priority:** High · **Effort:** Medium
 - **Depends on:** `inline-edit`
@@ -67,18 +67,18 @@ Risks and how they are handled:
 
 Order: schema, services and rules, permissions and policies, routes and controllers, screens, notifications and audit, seed data, tests, docs.
 
-- [ ] 6.1 Extract `TaskDetail.vue` from `Tasks/Show.vue` (no visual change) and re-test the page
-- [ ] 6.2 Endpoint/partial that returns the task detail payload for the panel
-- [ ] 6.3 `TaskPanel.vue` slide-over with open/close, focus return, Esc, mobile full screen
-- [ ] 6.4 Open from board cards, list rows, backlog rows, sprint lists, search results
-- [ ] 6.5 URL sync `?task=KEY` (open on load, update on open/close)
-- [ ] 6.6 Tests: payload parity with show page, visibility, deep link
-- [ ] 6.7 Docs: screen map in WORKFLOW section 12
+- [x] 6.1 Extract `TaskDetail.vue` from `Tasks/Show.vue` (no visual change) and re-test the page
+- [x] 6.2 Endpoint/partial that returns the task detail payload for the panel
+- [x] 6.3 `TaskPanel.vue` slide-over with open/close, focus return, Esc, mobile full screen
+- [x] 6.4 Open from board cards, list rows, backlog rows, sprint lists, search results
+- [x] 6.5 URL sync `?task=KEY` (open on load, update on open/close)
+- [x] 6.6 Tests: payload parity with show page, visibility, deep link
+- [x] 6.7 Docs: screen map in WORKFLOW section 12
 
-## 7. Verification (fill in when done)
+## 7. Verification
 
-- New tests:
-- Full test run: `php artisan test`
-- `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse`, `npm run build`
-- Checked in the browser (pages and roles):
-- Known gaps / follow-ups:
+- Built as planned, with these notes: `TaskController::show` returns the same payload as JSON with `?panel=1`; `Tasks/Show.vue` is now a thin wrapper around `Components/Tasks/TaskDetail.vue`, which the panel reuses. After anything is saved inside the panel it refetches; going to another page closes it.
+- New tests: DailyProductivityTest: payload parity with the page, visibility (other project, missing task, client), effort hidden from clients, no cross-company access.
+- Full test run, `vendor/bin/pint --dirty`, `vendor/bin/phpstan analyse` and `npm run build`: passed (see the group report).
+- Checked in the browser: list inline edit (title), side panel open and close with `?task=` in the address, J/K selection, shortcut help, quick add with `@name !4`.
+- Known gaps / follow-ups: dragging a card across swimlanes was verified by tests and not by an automated browser drag.

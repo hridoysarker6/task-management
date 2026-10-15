@@ -1,15 +1,17 @@
 <script setup>
 import ProjectHeader from '@/Components/Projects/ProjectHeader.vue';
+import QuickAdd from '@/Components/Tasks/QuickAdd.vue';
 import TaskCard from '@/Components/Tasks/TaskCard.vue';
 import TaskFilterBar from '@/Components/Tasks/TaskFilterBar.vue';
 import Btn from '@/Components/UI/Btn.vue';
 import ConfirmDialog from '@/Components/UI/ConfirmDialog.vue';
 import EmptyState from '@/Components/UI/EmptyState.vue';
+import { clearSelectable, setSelectable } from '@/Composables/useShortcuts';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 import { Head, Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import draggable from 'vuedraggable';
 
 const props = defineProps({
@@ -22,6 +24,7 @@ const props = defineProps({
     filters: { type: Object, required: true },
     truncated: Boolean,
     options: { type: Object, required: true },
+    assignees: { type: Array, default: () => [] },
     savedFilters: { type: Array, default: () => [] },
     canMove: Boolean,
     canCreate: Boolean,
@@ -45,6 +48,11 @@ const build = () => {
 };
 watch(() => [props.tasks, props.columns, props.swimlane, props.lanes], build, { immediate: true });
 
+// J / K move through the cards in the order they are shown.
+const selectableKeys = computed(() => laneRows.value.flatMap((l) => props.columns.flatMap((c) => (cells.value[cellKey(l.key, c.id)] ?? []).map((t) => t.key))));
+watch(selectableKeys, setSelectable, { immediate: true });
+onBeforeUnmount(clearSelectable);
+
 const total = (statusId) => props.tasks.filter((t) => t.status.id === statusId).length;
 
 // --- filters / swimlanes ---------------------------------------------------------------------
@@ -60,7 +68,7 @@ const send = async (payload, closeChildren = false) => {
     busy.value = true;
     error.value = '';
     try {
-        await axios.post(route('tasks.move', payload.key), { status_id: payload.status_id, prev_id: payload.prev_id, next_id: payload.next_id, close_children: closeChildren });
+        await axios.post(route('tasks.move', payload.key), { status_id: payload.status_id, prev_id: payload.prev_id, next_id: payload.next_id, close_children: closeChildren, ...(payload.lane ?? {}) });
         pending.value = null;
         router.reload({ preserveScroll: true });
     } catch (e) {
@@ -82,7 +90,13 @@ const onChange = (statusId, laneKey, evt) => {
     if (!hit) return;
     const list = cells.value[cellKey(laneKey, statusId)];
     const i = hit.newIndex;
-    send({ key: hit.element.key, status_id: statusId, prev_id: list[i - 1]?.id ?? null, next_id: list[i + 1]?.id ?? null });
+    // Dropped into another swimlane: the person (or the epic) changes with the status.
+    const lane = {};
+    const card = hit.element;
+    if (props.swimlane === 'assignee' && laneKey !== card.assignee_key) lane.assignee_id = laneKey === 'none' ? null : laneKey;
+    if (props.swimlane === 'epic' && laneKey !== card.epic_key) lane.parent_id = laneKey === 'none' ? null : laneKey;
+
+    send({ key: card.key, status_id: statusId, prev_id: list[i - 1]?.id ?? null, next_id: list[i + 1]?.id ?? null, lane });
 };
 const cancelPending = () => {
     pending.value = null;
@@ -160,13 +174,16 @@ const filtered = computed(() => Object.keys(props.filters).length > 0);
                                     item-key="id"
                                     :disabled="!canMove || busy || project.is_archived"
                                     ghost-class="opacity-40"
+                                    filter=".no-drag"
+                                    :prevent-on-filter="false"
                                     class="min-h-[4rem] space-y-2"
                                     @change="onChange(c.id, lane.key, $event)"
                                 >
                                     <template #item="{ element }">
-                                        <TaskCard :task="element" :show-effort="showEffort" />
+                                        <TaskCard :task="element" :show-effort="showEffort" :assignees="assignees" :priorities="options.priorities" />
                                     </template>
                                 </draggable>
+                                <QuickAdd v-if="canCreate && !project.is_archived && swimlane === 'none'" :project-id="project.id" :status-id="c.id" />
                             </div>
                         </div>
                     </section>

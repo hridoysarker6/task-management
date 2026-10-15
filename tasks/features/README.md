@@ -7,11 +7,11 @@ Build in the order of the table below unless a dependency says otherwise, and fo
 
 | Feature | Priority | Effort | Depends on | Status |
 |---|---|---|---|---|
-| [Inline editing on list and board](2026-10-15-inline-edit.md) | High | Medium | - | Planned |
-| [Task side panel (peek without leaving the board)](2026-10-15-task-side-panel.md) | High | Medium | inline-edit | Planned |
-| [Drag to reassign and re-parent on the board](2026-10-15-board-drag-reassign.md) | Medium | Small | - | Planned |
-| [Quick add at the bottom of a column or list](2026-10-15-quick-add-task.md) | Medium | Small | - | Planned |
-| [More keyboard shortcuts and a shortcut help sheet](2026-10-15-keyboard-shortcuts-extended.md) | Medium | Small | - | Planned |
+| [Inline editing on list and board](2026-10-15-inline-edit.md) | High | Medium | - | Done |
+| [Task side panel (peek without leaving the board)](2026-10-15-task-side-panel.md) | High | Medium | inline-edit | Done |
+| [Drag to reassign and re-parent on the board](2026-10-15-board-drag-reassign.md) | Medium | Small | - | Done |
+| [Quick add at the bottom of a column or list](2026-10-15-quick-add-task.md) | Medium | Small | - | Done |
+| [More keyboard shortcuts and a shortcut help sheet](2026-10-15-keyboard-shortcuts-extended.md) | Medium | Small | - | Done |
 
 ## B. Collaboration
 

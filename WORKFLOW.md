@@ -366,6 +366,9 @@ Every status belongs to a **category** (`todo`, `in_progress`, `done`), and prog
 - **Log work:** hours or minutes, date, and a note. The remaining estimate decreases automatically.
 - Comments (Internal/Public), @mentions, attachments, links (blocks / is blocked by / relates / duplicates), and sub-tasks.
 - A parent task cannot be closed while its sub-tasks are open (warning, with an option to close them all).
+- **Inline editing:** on the list and on board cards, click a title, status, assignee, priority, due date or points to change it in place (Enter or leaving the field saves, Esc cancels). The same rules apply as on the task page; a refusal shows next to the field. Controls only appear for people who may edit that task.
+- **Drag across swimlanes:** on a board grouped by assignee, dropping a card into another person's lane assigns the task to them as well as moving it; grouped by epic, it moves the task under that epic. A task under a story, or a sub-task, keeps its parent. If any part of the drop is refused, nothing changes.
+- **Quick add:** the "Add task" box at the foot of a column, the backlog or a sprint creates a task there from one line of text. `@name` assigns, `!3` (or `!high`) sets the priority, `#label` adds a label. Planning into a sprint needs the sprint right; requests from stakeholders still go through triage.
 
 ### 6.6 Closing & reopening
 - **Done** requires `task.close`. By default the TL, PM, or a manager reviews the work in `In Review` and closes it. If the project allows self-close, the developer can close their own task.
@@ -465,7 +468,8 @@ Users can switch email on or off per event type in **Profile → Notifications**
 - Dashboard (role-based)
 - My Work (assigned / reported / watching)
 - Projects list → Project: **Board · Backlog · Sprints · List · Triage · Reports · Settings (members, workflow, options)**
-- Task detail (full-page view and modal)
+- Task detail (full-page view, and a side panel that opens over the board, list, backlog and sprint pages; a link with `?task=ECP-12` opens it directly)
+- Keyboard: `Ctrl+K` or `/` search, `C` create, `J`/`K` move through tasks, `Enter` open, `A` `S` `P` `D` assign, status, priority, due date of the selected task, `G` then a letter to go to a page, `?` lists them all
 - Team view / Org chart
 - Timesheet (mine / team approval)
 - Reports (team, department, org, export)

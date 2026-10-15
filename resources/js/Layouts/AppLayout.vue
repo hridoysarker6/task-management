@@ -3,11 +3,15 @@ import BrandLogo from '@/Components/BrandLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import GlobalSearch from '@/Components/GlobalSearch.vue';
+import ShortcutHelp from '@/Components/ShortcutHelp.vue';
+import TaskPanel from '@/Components/Tasks/TaskPanel.vue';
 import NotificationBell from '@/Components/NotificationBell.vue';
 import CreateTaskModal from '@/Components/Tasks/CreateTaskModal.vue';
 import Avatar from '@/Components/UI/Avatar.vue';
 import FlashMessages from '@/Components/UI/FlashMessages.vue';
 import { usePermissions } from '@/Composables/usePermissions';
+import { helpOpen, installShortcuts } from '@/Composables/useShortcuts';
+import { openTask } from '@/Composables/useTaskPanel';
 import {
     ArrowLeftOnRectangleIcon,
     Bars3Icon,
@@ -21,6 +25,7 @@ import {
     ClipboardDocumentCheckIcon,
     ClipboardDocumentListIcon,
     ClockIcon,
+    CommandLineIcon,
     Cog6ToothIcon,
     HomeIcon,
     MagnifyingGlassIcon,
@@ -59,30 +64,20 @@ const toggleCollapsed = () => {
     }
 };
 
-// --- search and keyboard shortcuts: Ctrl/Cmd+K or / opens search, C creates a task --------------------
+// --- search and keyboard shortcuts (the list is in Composables/useShortcuts.js) --------------------------
 const searchOpen = ref(false);
-const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
-const onShortcut = (e) => {
-    if (!page.props.currentOrganization) return;
-
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        searchOpen.value = !searchOpen.value;
-        return;
-    }
-    // Plain keys only count when nobody is typing, no dialog is open and no modifier is held.
-    if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || document.querySelector('[role="dialog"]')) return;
-
-    if (e.key === '/') {
-        e.preventDefault();
-        searchOpen.value = true;
-    } else if (e.key.toLowerCase() === 'c' && can('task.create')) {
-        e.preventDefault();
-        openCreate();
-    }
-};
-onMounted(() => window.addEventListener('keydown', onShortcut));
-onBeforeUnmount(() => window.removeEventListener('keydown', onShortcut));
+let removeShortcuts = () => {};
+onMounted(() => {
+    removeShortcuts = installShortcuts({
+        can,
+        page,
+        openTask,
+        openCreate,
+        openSearch: () => (searchOpen.value = true),
+        toggleSearch: () => (searchOpen.value = !searchOpen.value),
+    });
+});
+onBeforeUnmount(() => removeShortcuts());
 
 // `permission` hides an item from people who lack it; `section` groups items under a small heading.
 const allNav = [
@@ -116,6 +111,8 @@ const isActive = (item) => route().current(item.match ?? item.routeName + '*') |
         <FlashMessages />
         <CreateTaskModal v-if="can('task.create')" />
         <GlobalSearch v-if="company" :show="searchOpen" @close="searchOpen = false" />
+        <TaskPanel v-if="company" />
+        <ShortcutHelp />
 
         <!-- Mobile backdrop -->
         <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" leave-active-class="transition-opacity duration-150" leave-to-class="opacity-0">
@@ -229,6 +226,7 @@ const isActive = (item) => route().current(item.match ?? item.routeName + '*') |
                             </div>
                             <div class="py-1">
                                 <DropdownLink :href="route('profile.edit')"><span class="flex items-center gap-2"><UserCircleIcon class="h-4 w-4 text-gray-400" /> Profile</span></DropdownLink>
+                                <button type="button" class="mx-1.5 my-0.5 block rounded-lg px-3 py-2 text-start text-sm leading-5 text-gray-700 transition-colors hover:bg-violet-50 hover:text-violet-700" style="width: calc(100% - 0.75rem)" @click="helpOpen = true"><span class="flex items-center gap-2"><CommandLineIcon class="h-4 w-4 text-gray-400" /> Keyboard shortcuts</span></button>
                                 <DropdownLink v-if="company" :href="route('notifications.preferences')"><span class="flex items-center gap-2"><BellIcon class="h-4 w-4 text-gray-400" /> Notification settings</span></DropdownLink>
                                 <DropdownLink :href="route('logout')" method="post" as="button"><span class="flex items-center gap-2"><ArrowLeftOnRectangleIcon class="h-4 w-4 text-gray-400" /> Log out</span></DropdownLink>
                             </div>

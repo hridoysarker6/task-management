@@ -7,11 +7,11 @@ use App\Models\ProjectStatus;
 use App\Models\Sprint;
 use App\Models\Task;
 use App\Services\BoardService;
+use App\Support\TaskAbilities;
 use App\Support\TaskFilters;
 use App\Support\TaskPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -47,13 +47,14 @@ class BoardController extends ProjectViewController
             ->orderBy('board_position')->orderBy('id')->limit(self::LIMIT + 1)->get();
 
         $truncated = $cards->count() > self::LIMIT;
-        $cards = $cards->take(self::LIMIT)->map(fn (Task $t) => TaskPresenter::card($t, ! $me->isExternal()))->values();
+        $abilities = new TaskAbilities($me, $project);
+        $cards = $cards->take(self::LIMIT)->map(fn (Task $t): array => array_merge(TaskPresenter::card($t, ! $me->isExternal()), ['can' => $abilities->of($t)]))->values();
 
         return Inertia::render('Tasks/Board', [
             'project' => $this->header($project),
             'columns' => $columns,
             'tasks' => $cards,
-            'lanes' => $this->lanes($swimlane, $cards),
+            'lanes' => $this->lanes($swimlane, $cards->toBase()),
             'swimlane' => $swimlane,
             'sprint' => $sprint ? [
                 'id' => $sprint->id, 'name' => $sprint->name, 'goal' => $sprint->goal,
@@ -63,6 +64,7 @@ class BoardController extends ProjectViewController
             'truncated' => $truncated,
             'options' => $this->filterOptions($project),
             'savedFilters' => $this->savedFilters($project, 'board'),
+            'assignees' => $this->assigneeChoices($project),
             'canMove' => $me->hasPermission('task.change_status') || $me->hasPermission('task.close') || $me->hasPermission('task.reopen'),
             'canCreate' => Gate::allows('createTask', $project),
             'showEffort' => ! $me->isExternal(),
@@ -80,11 +82,24 @@ class BoardController extends ProjectViewController
             'prev_id' => ['nullable', 'integer'],
             'next_id' => ['nullable', 'integer'],
             'close_children' => ['sometimes', 'boolean'],
+            'assignee_id' => ['sometimes', 'nullable', 'integer'],
+            'parent_id' => ['sometimes', 'nullable', 'integer'],
         ]);
+
+        // A drop into another swimlane also assigns or re-parents: each needs its own right.
+        $lane = [];
+        if ($request->exists('assignee_id')) {
+            Gate::authorize('assign', $task);
+            $lane['assignee_id'] = $data['assignee_id'] ?? null;
+        }
+        if ($request->exists('parent_id')) {
+            Gate::authorize('update', $task);
+            $lane['parent_id'] = $data['parent_id'] ?? null;
+        }
 
         $to = ProjectStatus::where('project_id', $task->project_id)->findOrFail($data['status_id']);
 
-        $task = $board->moveCard($task, $to, $data['prev_id'] ?? null, $data['next_id'] ?? null, $this->current->membership, (bool) ($data['close_children'] ?? false));
+        $task = $board->moveCard($task, $to, $data['prev_id'] ?? null, $data['next_id'] ?? null, $this->current->membership, (bool) ($data['close_children'] ?? false), $lane);
 
         return response()->json(['ok' => true, 'status_id' => $task->status_id, 'position' => (float) $task->board_position]);
     }
@@ -92,14 +107,16 @@ class BoardController extends ProjectViewController
     /**
      * The rows of the board when it is split into swimlanes.
      *
-     * @param  Collection<int, array<string, mixed>>  $cards
+     * @param  iterable<int, array<string, mixed>>  $cards
      * @return list<array{key:string|int,label:string,sub:?string}>
      */
-    private function lanes(string $swimlane, $cards): array
+    private function lanes(string $swimlane, iterable $cards): array
     {
         if ($swimlane === 'none') {
             return [];
         }
+
+        $cards = collect($cards);
 
         $lanes = $swimlane === 'assignee'
             ? $cards->filter(fn ($c) => $c['assignee'])->unique(fn ($c) => $c['assignee']['id'])->sortBy(fn ($c) => $c['assignee']['name'])

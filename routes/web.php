@@ -123,6 +123,7 @@ Route::middleware(['auth', 'verified', 'company'])->group(function () {
     Route::get('tasks/search', [TaskController::class, 'search'])->name('tasks.search');
     Route::get('tasks/create-options', [TaskController::class, 'createOptions'])->name('tasks.create-options');
     Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
+    Route::post('tasks/quick', [TaskController::class, 'quick'])->name('tasks.quick');
     Route::get('tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
     Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
     Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
