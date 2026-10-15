@@ -26,8 +26,8 @@ const label = (d) => new Date(d + 'T00:00:00').toLocaleDateString(undefined, { d
                 <text :x="PAD.l - 6" :y="y(t) + 3" text-anchor="end" class="fill-gray-400 text-[9px]">{{ t }}</text>
             </g>
             <polyline :points="line('ideal')" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 3" />
-            <polyline :points="line('actual')" fill="none" stroke="#4f46e5" stroke-width="2.5" />
-            <circle v-for="(d, i) in days.filter((d) => d.actual !== null).slice(-1)" :key="d.date" :cx="x(days.indexOf(d))" :cy="y(d.actual)" r="3.5" fill="#4f46e5" />
+            <polyline :points="line('actual')" fill="none" stroke="#7c3aed" stroke-width="2.5" />
+            <circle v-for="(d, i) in days.filter((d) => d.actual !== null).slice(-1)" :key="d.date" :cx="x(days.indexOf(d))" :cy="y(d.actual)" r="3.5" fill="#7c3aed" />
             <text :x="PAD.l" :y="height - 6" class="fill-gray-400 text-[9px]">{{ label(days[0].date) }}</text>
             <text :x="W - PAD.r" :y="height - 6" text-anchor="end" class="fill-gray-400 text-[9px]">{{ label(days[days.length - 1].date) }}</text>
         </svg>

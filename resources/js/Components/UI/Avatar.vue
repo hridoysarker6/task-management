@@ -17,21 +17,30 @@ const initials = computed(() =>
         .join('') || '?',
 );
 
-const palette = ['bg-indigo-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-sky-500', 'bg-violet-500', 'bg-teal-500'];
+// A soft gradient per person, stable for the same name.
+const palette = [
+    'from-violet-500 to-violet-700',
+    'from-emerald-400 to-emerald-600',
+    'from-amber-400 to-orange-500',
+    'from-rose-400 to-rose-600',
+    'from-sky-400 to-blue-600',
+    'from-fuchsia-400 to-fuchsia-600',
+    'from-teal-400 to-teal-600',
+];
 const color = computed(() => {
     let h = 0;
     for (const c of props.name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    return props.former ? 'bg-gray-400' : palette[h % palette.length];
+    return props.former ? 'from-gray-300 to-gray-400' : palette[h % palette.length];
 });
 const sizes = { sm: 'h-6 w-6 text-[10px]', md: 'h-8 w-8 text-xs', lg: 'h-12 w-12 text-base' };
 </script>
 
 <template>
-    <img v-if="src" :src="src" :alt="name" :title="name" :class="['rounded-full object-cover', sizes[size]]" />
+    <img v-if="src" :src="src" :alt="name" :title="name" :class="['rounded-full object-cover ring-2 ring-white', sizes[size]]" />
     <span
         v-else
         :title="name"
-        :class="['inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white', sizes[size], color]"
+        :class="['inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-semibold text-white ring-2 ring-white', sizes[size], color]"
     >
         {{ initials }}
     </span>

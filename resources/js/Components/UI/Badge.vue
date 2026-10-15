@@ -8,19 +8,19 @@ const props = defineProps({
 const classes = computed(
     () =>
         ({
-            gray: 'bg-gray-100 text-gray-700',
-            blue: 'bg-blue-100 text-blue-700',
-            green: 'bg-green-100 text-green-700',
-            yellow: 'bg-yellow-100 text-yellow-800',
-            red: 'bg-red-100 text-red-700',
-            purple: 'bg-purple-100 text-purple-700',
-            indigo: 'bg-indigo-100 text-indigo-700',
-        })[props.color] ?? 'bg-gray-100 text-gray-700',
+            gray: 'bg-gray-100 text-gray-700 ring-gray-500/15',
+            blue: 'bg-sky-50 text-sky-700 ring-sky-600/20',
+            green: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+            yellow: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+            red: 'bg-rose-50 text-rose-700 ring-rose-600/20',
+            purple: 'bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-600/20',
+            indigo: 'bg-violet-50 text-violet-700 ring-violet-600/20',
+        })[props.color] ?? 'bg-gray-100 text-gray-700 ring-gray-500/15',
 );
 </script>
 
 <template>
-    <span :class="['inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', classes]">
+    <span :class="['inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset', classes]">
         <slot />
     </span>
 </template>

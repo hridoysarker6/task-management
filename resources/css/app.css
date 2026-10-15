@@ -1,3 +1,180 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ------------------------------------------------------------------------------------------------
+   Task Pro: base look. Colours and radii come from tailwind.config.js; this file adds the details that
+   make the app feel smooth: typography, focus rings, soft cards, form fields and motion.
+   ------------------------------------------------------------------------------------------------ */
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-gray-50 text-gray-800 antialiased;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+        text-rendering: optimizeLegibility;
+    }
+
+    ::selection {
+        @apply bg-violet-200 text-violet-900;
+    }
+
+    /* One consistent, visible focus ring for keyboard users. */
+    :focus-visible {
+        outline: 2px solid theme('colors.violet.500');
+        outline-offset: 2px;
+    }
+
+    /* Form fields: rounder, calmer, with a soft violet focus glow. */
+    [type='text'],
+    [type='email'],
+    [type='url'],
+    [type='password'],
+    [type='number'],
+    [type='date'],
+    [type='datetime-local'],
+    [type='month'],
+    [type='search'],
+    [type='tel'],
+    [type='time'],
+    [type='week'],
+    [multiple],
+    textarea,
+    select {
+        @apply rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm transition duration-150 placeholder:text-gray-400;
+    }
+
+    [type='text']:hover,
+    [type='email']:hover,
+    [type='password']:hover,
+    [type='number']:hover,
+    [type='date']:hover,
+    [type='search']:hover,
+    textarea:hover,
+    select:hover {
+        @apply border-gray-400;
+    }
+
+    [type='text']:focus,
+    [type='email']:focus,
+    [type='url']:focus,
+    [type='password']:focus,
+    [type='number']:focus,
+    [type='date']:focus,
+    [type='datetime-local']:focus,
+    [type='search']:focus,
+    [type='tel']:focus,
+    [type='time']:focus,
+    textarea:focus,
+    select:focus {
+        @apply border-violet-500 ring-4 ring-violet-500/15;
+        outline: none;
+    }
+
+    [type='checkbox'],
+    [type='radio'] {
+        @apply border-gray-300 text-violet-600 shadow-sm transition;
+    }
+
+    [type='checkbox'] {
+        @apply rounded-md;
+    }
+
+    [type='checkbox']:focus,
+    [type='radio']:focus {
+        @apply ring-4 ring-violet-500/15 ring-offset-0;
+    }
+
+    input:disabled,
+    select:disabled,
+    textarea:disabled {
+        @apply cursor-not-allowed bg-gray-50 text-gray-500;
+    }
+
+    button,
+    a {
+        @apply transition-colors duration-150;
+    }
+
+    /* Slim, unobtrusive scrollbars. */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.gray.300') transparent;
+    }
+
+    *::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    *::-webkit-scrollbar-thumb {
+        @apply rounded-full bg-gray-300;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+        @apply bg-gray-400;
+    }
+}
+
+@layer components {
+    /* Page content eases in when a page opens. */
+    .page-enter {
+        animation: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* Primary action: gradient with a soft glow. */
+    .btn-primary {
+        @apply bg-gradient-to-b from-violet-500 to-violet-600 text-white shadow-sm ring-1 ring-inset ring-violet-700/30 hover:from-violet-500 hover:to-violet-700 hover:shadow-glow active:scale-[0.98];
+    }
+
+    .text-gradient {
+        @apply bg-gradient-to-r from-violet-600 via-fuchsia-500 to-sky-500 bg-clip-text text-transparent;
+    }
+}
+
+/* Plain CSS (not inside a Tailwind layer, so these selectors are used as written).
+   Every "card" in the app (white, rounded, bordered) gets a soft lift instead of a flat outline. */
+.rounded-xl.border.bg-white {
+    border-color: theme('colors.gray.200' / 80%);
+    box-shadow: theme('boxShadow.sm');
+}
+
+/* Clickable cards respond to the pointer. */
+a.rounded-xl.border.bg-white,
+button.rounded-xl.border.bg-white {
+    transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+a.rounded-xl.border.bg-white:hover,
+button.rounded-xl.border.bg-white:hover {
+    transform: translateY(-1px);
+    border-color: theme('colors.violet.300');
+    box-shadow: theme('boxShadow.md');
+}
+
+/* Table headers: a calmer tint. */
+thead.bg-gray-50 {
+    background-color: theme('colors.gray.50' / 80%);
+}
+
+/* Respect people who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+@media print {
+    body {
+        @apply bg-white;
+    }
+}

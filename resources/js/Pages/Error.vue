@@ -1,5 +1,5 @@
 <script setup>
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import BrandLogo from '@/Components/BrandLogo.vue';
 import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -17,23 +17,27 @@ const copy = computed(
         })[props.status] ?? { title: 'Something went wrong', text: 'Please try again.' },
 );
 
+const retry = computed(() => props.status === 419 || props.status >= 500);
 const reload = () => window.location.reload();
 const back = () => window.history.back();
+const btn = 'inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold transition active:scale-[0.98]';
 </script>
 
 <template>
     <Head :title="`${status} · ${copy.title}`" />
 
-    <main class="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-6 py-12 text-center">
-        <a href="/" class="mb-8" aria-label="Home"><ApplicationLogo class="h-10 w-10 fill-current text-indigo-600" /></a>
-        <p class="text-5xl font-bold text-indigo-600">{{ status }}</p>
-        <h1 class="mt-3 text-xl font-semibold text-gray-900">{{ copy.title }}</h1>
-        <p class="mt-2 max-w-md text-sm text-gray-600">{{ copy.text }}</p>
+    <main class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gray-50 px-6 py-12 text-center">
+        <div class="pointer-events-none absolute -top-32 left-1/2 h-96 w-[40rem] -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-200/50 to-sky-200/50 blur-3xl" />
 
-        <div class="mt-6 flex flex-wrap justify-center gap-3">
-            <button v-if="status === 419 || status >= 500" type="button" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700" @click="reload">Reload</button>
-            <a href="/dashboard" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700" :class="status === 419 || status >= 500 ? '!bg-white !text-gray-700 border border-gray-300 hover:!bg-gray-50' : ''">Go to the dashboard</a>
-            <button v-if="status === 403 || status === 404" type="button" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" @click="back">Go back</button>
+        <a href="/" class="relative mb-10" aria-label="Task Pro home"><BrandLogo size="lg" /></a>
+        <p class="text-gradient relative text-7xl font-extrabold tracking-tight">{{ status }}</p>
+        <h1 class="relative mt-4 text-2xl font-bold tracking-tight text-gray-900">{{ copy.title }}</h1>
+        <p class="relative mt-2 max-w-md text-sm text-gray-600">{{ copy.text }}</p>
+
+        <div class="relative mt-8 flex flex-wrap justify-center gap-3">
+            <button v-if="retry" type="button" :class="[btn, 'btn-primary']" @click="reload">Reload</button>
+            <a href="/dashboard" :class="[btn, retry ? 'border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50' : 'btn-primary']">Go to the dashboard</a>
+            <button v-if="status === 403 || status === 404" type="button" :class="[btn, 'border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50']" @click="back">Go back</button>
         </div>
     </main>
 </template>

@@ -8,13 +8,7 @@ const model = defineModel();
 </script>
 
 <template>
-    <select
-        v-model="model"
-        :class="[
-            'block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
-            error ? 'border-red-400' : '',
-        ]"
-    >
+    <select v-model="model" :class="['block w-full text-sm', error ? '!border-rose-400 !ring-rose-500/10' : '']">
         <option v-if="placeholder" :value="null" disabled>{{ placeholder }}</option>
         <option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option>
         <slot />

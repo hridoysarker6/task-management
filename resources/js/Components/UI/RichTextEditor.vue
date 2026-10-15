@@ -67,7 +67,7 @@ const setLink = () => {
 .task-rich-text .tiptap blockquote { border-left: 3px solid #d1d5db; padding-left: 0.75rem; color: #4b5563; }
 .task-rich-text .tiptap code { background: #f3f4f6; padding: 0 0.25rem; border-radius: 0.25rem; font-size: 0.85em; }
 .task-rich-text .tiptap pre { background: #1f2937; color: #f9fafb; padding: 0.5rem 0.75rem; border-radius: 0.5rem; overflow-x: auto; }
-.task-rich-text .tiptap a { color: #4f46e5; text-decoration: underline; }
+.task-rich-text .tiptap a { color: #7c3aed; text-decoration: underline; }
 .task-rich-text .tiptap h2 { font-size: 1.1rem; font-weight: 600; }
 .task-rich-text .tiptap h3 { font-size: 1rem; font-weight: 600; }
 .rich-html p { margin: 0.25rem 0; }
@@ -76,7 +76,7 @@ const setLink = () => {
 .rich-html blockquote { border-left: 3px solid #d1d5db; padding-left: 0.75rem; color: #4b5563; }
 .rich-html code { background: #f3f4f6; padding: 0 0.25rem; border-radius: 0.25rem; font-size: 0.85em; }
 .rich-html pre { background: #1f2937; color: #f9fafb; padding: 0.5rem 0.75rem; border-radius: 0.5rem; overflow-x: auto; }
-.rich-html a { color: #4f46e5; text-decoration: underline; }
+.rich-html a { color: #7c3aed; text-decoration: underline; }
 .rich-html h2 { font-size: 1.1rem; font-weight: 600; }
 .rich-html h3 { font-size: 1rem; font-weight: 600; }
 </style>

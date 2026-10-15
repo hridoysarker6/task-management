@@ -19,7 +19,7 @@ const h = (v) => (v / max.value) * (props.height - 34);
         <svg :viewBox="`0 0 ${W} ${height}`" class="w-full" role="img" :aria-label="'Velocity: ' + sprints.map((s) => `${s.name} ${s.completed} of ${s.committed}`).join(', ')">
             <g v-for="(s, i) in sprints" :key="s.name">
                 <rect :x="30 + i * slot + slot * 0.12" :y="height - 20 - h(s.committed)" :width="slot * 0.36" :height="h(s.committed)" fill="#d1d5db" rx="2" />
-                <rect :x="30 + i * slot + slot * 0.5" :y="height - 20 - h(s.completed)" :width="slot * 0.36" :height="h(s.completed)" fill="#4f46e5" rx="2" />
+                <rect :x="30 + i * slot + slot * 0.5" :y="height - 20 - h(s.completed)" :width="slot * 0.36" :height="h(s.completed)" fill="#7c3aed" rx="2" />
                 <text :x="30 + i * slot + slot / 2" :y="height - 7" text-anchor="middle" class="fill-gray-500 text-[8px]">{{ s.name.length > 10 ? s.name.slice(0, 9) + '…' : s.name }}</text>
             </g>
             <text x="26" :y="height - 20" text-anchor="end" class="fill-gray-400 text-[8px]">0</text>
