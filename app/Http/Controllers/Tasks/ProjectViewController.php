@@ -6,6 +6,7 @@ use App\Http\Controllers\Projects\ProjectBaseController;
 use App\Models\Label;
 use App\Models\Project;
 use App\Models\SavedFilter;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Support\TaskFilters;
 use Illuminate\Http\Request;
@@ -37,6 +38,9 @@ abstract class ProjectViewController extends ProjectBaseController
             'statuses' => $project->statuses()->get(['id', 'name', 'color', 'category', 'show_on_board']),
             'people' => $people,
             'labels' => Label::where('project_id', $project->id)->get(['id', 'name', 'color']),
+            'sprints' => $project->uses_sprints && ! $me->isExternal()
+                ? Sprint::where('project_id', $project->id)->orderByDesc('start_date')->get(['id', 'name', 'status'])
+                : [],
             'types' => Task::TYPES,
             'priorities' => collect(Task::PRIORITIES)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values(),
             'meId' => $me->id,

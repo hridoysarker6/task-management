@@ -21,6 +21,8 @@ abstract class ProjectBaseController extends Controller
             'name' => $project->name,
             'status' => $project->status,
             'is_archived' => $project->isArchived(),
+            'uses_sprints' => $project->uses_sprints,
+            'show_sprints' => $project->uses_sprints && ! $this->current->membership->isExternal() && $this->current->membership->hasPermission('sprint.view'),
             'abilities' => [
                 'update' => Gate::allows('update', $project),
                 'change_status' => Gate::allows('changeStatus', $project),

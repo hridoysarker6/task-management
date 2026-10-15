@@ -76,7 +76,9 @@ class CompanyReviewService
 
     public function setUserLimit(Organization $organization, ?int $limit): void
     {
+        $before = $organization->user_limit;
         $organization->forceFill(['user_limit' => $limit])->save();
+        app(AuditLogger::class)->record('company.user_limit_changed', $organization, ['user_limit' => $before], ['user_limit' => $limit], $organization->name, platform: true);
     }
 
     private function transition(Organization $organization, User $actor, string $status, string $action, string $note): void
@@ -90,6 +92,7 @@ class CompanyReviewService
     private function record(Organization $organization, string $action, User $actor, ?string $note = null): void
     {
         $organization->reviews()->create(['action' => $action, 'note' => $note, 'acted_by' => $actor->id]);
+        app(AuditLogger::class)->record("company.{$action}", $organization, null, $note !== null ? ['note' => $note] : null, $organization->name, platform: true);
     }
 
     /** @param list<string> $allowed */

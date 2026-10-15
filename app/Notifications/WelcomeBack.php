@@ -4,12 +4,17 @@ namespace App\Notifications;
 
 use App\Models\Organization;
 use App\Models\Role;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Queue\SerializesModels;
 
 /** Sent when a former employee is rehired: they sign in with their old account. */
-class WelcomeBack extends Notification
+class WelcomeBack extends Notification implements ShouldQueue
 {
+    use Queueable, SerializesModels;
+
     public function __construct(public Organization $organization, public Role $role) {}
 
     public function via(object $notifiable): array

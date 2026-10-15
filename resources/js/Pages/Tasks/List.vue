@@ -37,6 +37,7 @@ const allColumns = computed(() => [
     { key: 'title', label: 'Title', sort: 'title', fixed: true },
     { key: 'type', label: 'Type', sort: 'type' },
     { key: 'status', label: 'Status', sort: 'status' },
+    ...(props.options.sprints?.length ? [{ key: 'sprint', label: 'Sprint' }] : []),
     { key: 'priority', label: 'Priority', sort: 'priority' },
     { key: 'assignee', label: 'Assignee', sort: 'assignee' },
     { key: 'reporter', label: 'Reporter', sort: 'reporter' },
@@ -92,7 +93,8 @@ const closeChildren = ref(false);
 const confirmDelete = ref(false);
 const working = ref(false);
 
-const needsTarget = computed(() => ['assign', 'status', 'label_add', 'label_remove'].includes(action.value));
+const openSprints = computed(() => (props.options.sprints ?? []).filter((s) => s.status !== 'completed'));
+const needsTarget = computed(() => ['assign', 'status', 'label_add', 'label_remove', 'sprint'].includes(action.value));
 const ready = computed(() => selected.value.length > 0 && action.value && (!needsTarget.value || target.value !== '' || action.value === 'assign'));
 const run = () => {
     if (action.value === 'delete' && !confirmDelete.value) {
@@ -109,6 +111,7 @@ const run = () => {
             assignee_id: action.value === 'assign' && target.value !== '' && target.value !== 'none' ? target.value : null,
             status_id: action.value === 'status' ? target.value : null,
             label_id: action.value.startsWith('label_') ? target.value : null,
+            sprint_id: action.value === 'sprint' && target.value !== 'none' ? target.value : null,
             close_children: closeChildren.value,
             with_children: action.value === 'delete',
         },
@@ -152,6 +155,7 @@ const create = () => window.dispatchEvent(new CustomEvent('create-task', { detai
                 <option value="status">Change status…</option>
                 <option value="label_add">Add label…</option>
                 <option value="label_remove">Remove label…</option>
+                <option v-if="openSprints.length" value="sprint">Move to sprint…</option>
                 <option value="delete">Delete</option>
             </select>
             <select v-if="action === 'assign'" v-model="target" aria-label="Assignee" class="rounded-lg border-gray-300 py-1 text-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -162,6 +166,11 @@ const create = () => window.dispatchEvent(new CustomEvent('create-task', { detai
             <select v-if="action === 'status'" v-model="target" aria-label="Status" class="rounded-lg border-gray-300 py-1 text-sm focus:border-indigo-500 focus:ring-indigo-500">
                 <option value="">Choose a status…</option>
                 <option v-for="s in options.statuses" :key="s.id" :value="s.id">{{ s.name }}</option>
+            </select>
+            <select v-if="action === 'sprint'" v-model="target" aria-label="Sprint" class="rounded-lg border-gray-300 py-1 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">Choose a sprint…</option>
+                <option value="none">Back to the backlog</option>
+                <option v-for="s in openSprints" :key="s.id" :value="s.id">{{ s.name }}</option>
             </select>
             <select v-if="action.startsWith('label_')" v-model="target" aria-label="Label" class="rounded-lg border-gray-300 py-1 text-sm focus:border-indigo-500 focus:ring-indigo-500">
                 <option value="">Choose a label…</option>
@@ -218,6 +227,7 @@ const create = () => window.dispatchEvent(new CustomEvent('create-task', { detai
                                 <Link v-else-if="c.key === 'title'" :href="route('tasks.show', t.key)" class="block truncate text-gray-900 hover:text-indigo-600" :title="t.title">{{ t.title }}</Link>
                                 <TaskBits v-else-if="c.key === 'type'" kind="type" :value="t.type" />
                                 <TaskBits v-else-if="c.key === 'status'" kind="status" :value="t.status" />
+                                <span v-else-if="c.key === 'sprint'" class="text-gray-600">{{ t.sprint?.name ?? '—' }}</span>
                                 <TaskBits v-else-if="c.key === 'priority'" kind="priority" :value="t.priority" />
                                 <span v-else-if="c.key === 'assignee'" class="inline-flex items-center gap-2">
                                     <template v-if="t.assignee"><Avatar :name="t.assignee.name" size="sm" /> {{ t.assignee.name }}</template>

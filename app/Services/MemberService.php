@@ -28,6 +28,8 @@ class MemberService
     public function update(Membership $member, Membership $actor, array $data): Membership
     {
         $this->assertCanEdit($member, $actor, $data);
+        $fields = ['role_id', 'department_id', 'reports_to_id', 'designation', 'employee_code'];
+        $before = $member->only($fields);
 
         DB::transaction(function () use ($member, $actor, $data) {
             if (array_key_exists('role_id', $data) && (int) $data['role_id'] !== $member->role_id) {
@@ -66,7 +68,14 @@ class MemberService
             $this->employment->sync($member->refresh());
         });
 
-        return $member->refresh();
+        $member->refresh();
+
+        [$old, $new] = AuditLogger::diff($before, $member->only($fields));
+        if ($new) {
+            app(AuditLogger::class)->record('member.updated', $member, $old, $new, $member->user->name);
+        }
+
+        return $member;
     }
 
     /** @throws ValidationException */

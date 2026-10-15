@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Tasks;
 
 use App\Models\Project;
 use App\Models\ProjectStatus;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Services\BoardService;
 use App\Support\TaskFilters;
@@ -32,11 +33,15 @@ class BoardController extends ProjectViewController
 
         $columns = $project->statuses()->where('show_on_board', true)->get(['id', 'name', 'color', 'category']);
 
-        $query = TaskFilters::apply(
-            Task::visibleTo($me)->where('project_id', $project->id)->whereIn('status_id', $columns->pluck('id')),
-            $filters,
-            $me,
-        );
+        $base = Task::visibleTo($me)->where('project_id', $project->id)->whereIn('status_id', $columns->pluck('id'));
+
+        // With sprints on, the board is the active sprint (nothing when none is running); Kanban projects show everything.
+        $sprint = $project->uses_sprints ? Sprint::where('project_id', $project->id)->where('status', Sprint::ACTIVE)->first() : null;
+        if ($project->uses_sprints) {
+            $sprint ? $base->where('sprint_id', $sprint->id) : $base->whereRaw('1 = 0');
+        }
+
+        $query = TaskFilters::apply($base, $filters, $me);
 
         $cards = $query->with(['project', 'status', 'assignee.user:id,name', 'labels', 'parent.parent'])
             ->orderBy('board_position')->orderBy('id')->limit(self::LIMIT + 1)->get();
@@ -50,6 +55,10 @@ class BoardController extends ProjectViewController
             'tasks' => $cards,
             'lanes' => $this->lanes($swimlane, $cards),
             'swimlane' => $swimlane,
+            'sprint' => $sprint ? [
+                'id' => $sprint->id, 'name' => $sprint->name, 'goal' => $sprint->goal,
+                'end_date' => $sprint->end_date->toDateString(), 'days_left' => (int) today()->diffInDays($sprint->end_date, false),
+            ] : null,
             'filters' => $filters,
             'truncated' => $truncated,
             'options' => $this->filterOptions($project),

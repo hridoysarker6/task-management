@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Attachment;
 use App\Models\Comment;
 use App\Policies\TaskPolicy;
+use App\Services\NotificationPreferenceService;
 use App\Support\Tenancy\CurrentOrganization;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
@@ -19,6 +20,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // One per request (and per queued job), so company context never leaks between them.
         $this->app->scoped(CurrentOrganization::class);
+        // Preferences are read once per request or job, so a long-running queue worker never serves stale ones.
+        $this->app->scoped(NotificationPreferenceService::class);
     }
 
     /**

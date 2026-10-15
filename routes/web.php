@@ -2,10 +2,14 @@
 
 use App\Http\Controllers\Admin\CompanyController as AdminCompanyController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\FailedJobController;
 use App\Http\Controllers\Admin\RoleTemplateController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Company\ApplicationController;
 use App\Http\Controllers\Company\RegisterCompanyController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Notifications\NotificationController;
+use App\Http\Controllers\Notifications\PreferencesController;
 use App\Http\Controllers\OrganizationSwitchController;
 use App\Http\Controllers\People\AcceptInvitationController;
 use App\Http\Controllers\People\ImportController;
@@ -20,10 +24,14 @@ use App\Http\Controllers\Projects\MemberController as ProjectMemberController;
 use App\Http\Controllers\Projects\ProjectController;
 use App\Http\Controllers\Projects\SettingsController as ProjectSettingsController;
 use App\Http\Controllers\Projects\WorkflowController;
+use App\Http\Controllers\Reports\DrilldownController;
+use App\Http\Controllers\Reports\ReportController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\CompanySettingsController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\OnboardingController;
 use App\Http\Controllers\Settings\RoleController;
+use App\Http\Controllers\Sprints\SprintController;
 use App\Http\Controllers\Tasks\AttachmentController;
 use App\Http\Controllers\Tasks\BacklogController;
 use App\Http\Controllers\Tasks\BoardController;
@@ -36,6 +44,9 @@ use App\Http\Controllers\Tasks\TaskListController;
 use App\Http\Controllers\Tasks\TeamController;
 use App\Http\Controllers\Tasks\TrashController;
 use App\Http\Controllers\Tasks\TriageController;
+use App\Http\Controllers\Time\TeamTimesheetController;
+use App\Http\Controllers\Time\TimesheetController;
+use App\Http\Controllers\Time\WorkLogController;
 use App\Models\Task;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -68,6 +79,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
+    Route::delete('/profile/avatar', [ProfileController::class, 'removeAvatar'])->name('profile.avatar.destroy');
 });
 
 // The applicant's own application: status page and edit & resubmit (after rejection / info request).
@@ -143,6 +156,43 @@ Route::middleware(['auth', 'verified', 'company'])->group(function () {
     Route::post('saved-filters', [SavedFilterController::class, 'store'])->name('saved-filters.store');
     Route::delete('saved-filters/{savedFilter}', [SavedFilterController::class, 'destroy'])->name('saved-filters.destroy');
     Route::get('team', TeamController::class)->name('team');
+
+    // Search, and the audit log of the company.
+    Route::get('search', SearchController::class)->name('search');
+    Route::get('settings/audit', [AuditLogController::class, 'company'])->name('audit.index');
+
+    // Notifications: the bell, the page and each person's settings.
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::get('notifications/preferences', [PreferencesController::class, 'show'])->name('notifications.preferences');
+    Route::put('notifications/preferences', [PreferencesController::class, 'update'])->name('notifications.preferences.update');
+
+    // Reports and drill-down.
+    Route::get('reports/{report?}', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/{report}/export', [ReportController::class, 'export'])->name('reports.export');
+    Route::get('drill/{membership?}', DrilldownController::class)->name('drill');
+
+    // Time tracking.
+    Route::post('tasks/{task}/worklogs', [WorkLogController::class, 'store'])->name('tasks.worklogs.store');
+    Route::put('worklogs/{worklog}', [WorkLogController::class, 'update'])->name('worklogs.update');
+    Route::delete('worklogs/{worklog}', [WorkLogController::class, 'destroy'])->name('worklogs.destroy');
+    Route::get('timesheet', [TimesheetController::class, 'index'])->name('timesheet');
+    Route::post('timesheet/cell', [TimesheetController::class, 'cell'])->name('timesheet.cell');
+    Route::post('timesheet/submit', [TimesheetController::class, 'submit'])->name('timesheet.submit');
+    Route::get('timesheets/team', [TeamTimesheetController::class, 'index'])->name('timesheets.team');
+    Route::post('timesheets/{timesheet}/approve', [TeamTimesheetController::class, 'approve'])->name('timesheets.approve');
+    Route::post('timesheets/{timesheet}/return', [TeamTimesheetController::class, 'returnSheet'])->name('timesheets.return');
+
+    // Sprints.
+    Route::get('projects/{project}/sprints', [SprintController::class, 'index'])->name('projects.sprints.index');
+    Route::post('projects/{project}/sprints', [SprintController::class, 'store'])->name('projects.sprints.store');
+    Route::put('sprints/{sprint}', [SprintController::class, 'update'])->name('sprints.update');
+    Route::delete('sprints/{sprint}', [SprintController::class, 'destroy'])->name('sprints.destroy');
+    Route::post('sprints/{sprint}/start', [SprintController::class, 'start'])->name('sprints.start');
+    Route::post('sprints/{sprint}/complete', [SprintController::class, 'complete'])->name('sprints.complete');
+    Route::post('tasks/{task}/sprint', [SprintController::class, 'assign'])->name('tasks.sprint');
     Route::get('projects/{project}/trash', TrashController::class)->name('projects.trash');
 
     Route::prefix('projects')->name('projects.')->group(function () {
@@ -219,6 +269,12 @@ Route::middleware(['auth', 'verified', 'system.admin'])->prefix('admin')->name('
     Route::post('companies/{organization}/reactivate', [AdminCompanyController::class, 'reactivate'])->name('companies.reactivate');
     Route::patch('companies/{organization}/user-limit', [AdminCompanyController::class, 'updateUserLimit'])->name('companies.user-limit');
     Route::get('companies/{organization}/documents/{document}', [AdminCompanyController::class, 'downloadDocument'])->name('companies.documents.download');
+
+    Route::get('audit', [AuditLogController::class, 'platform'])->name('audit.index');
+
+    Route::get('failed-jobs', [FailedJobController::class, 'index'])->name('failed-jobs.index');
+    Route::post('failed-jobs/{uuid}/retry', [FailedJobController::class, 'retry'])->name('failed-jobs.retry');
+    Route::delete('failed-jobs/{uuid}', [FailedJobController::class, 'destroy'])->name('failed-jobs.destroy');
 
     Route::get('role-template', [RoleTemplateController::class, 'index'])->name('role-template.index');
     Route::put('role-template/matrix', [RoleTemplateController::class, 'updateMatrix'])->name('role-template.matrix');

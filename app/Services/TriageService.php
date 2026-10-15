@@ -31,7 +31,7 @@ class TriageService
         $this->assertInTriage($task);
         $project = Project::findOrFail($task->project_id);
 
-        return DB::transaction(function () use ($task, $actor, $data, $project) {
+        $accepted = DB::transaction(function () use ($task, $actor, $data, $project) {
             $changes = collect($data)->only(['type', 'priority'])->filter(fn ($v) => $v !== null && $v !== '')->all();
             if ($changes) {
                 $this->tasks->update($task, $actor, $changes);
@@ -50,6 +50,10 @@ class TriageService
 
             return $task;
         });
+
+        app(Notifier::class)->triageDecision($accepted, true);
+
+        return $accepted;
     }
 
     /** Reject the request with a reason; the task is closed in a cancelled status (Rejected when there is one). */
@@ -67,12 +71,16 @@ class TriageService
         $to = $statuses->first(fn (ProjectStatus $s) => strtolower($s->name) === 'rejected') ?? $statuses->first()
             ?? throw ValidationException::withMessages(['status' => 'This project has no cancelled status to reject into. Add one in its workflow settings.']);
 
-        return DB::transaction(function () use ($task, $to, $reason, $actor) {
+        $rejected = DB::transaction(function () use ($task, $to, $reason, $actor) {
             $this->tasks->move($task, $to, $reason);
             $this->activity->log($task, 'triage_rejected', null, null, $reason, actorId: $actor->id);
 
             return $task;
         });
+
+        app(Notifier::class)->triageDecision($rejected, false, $reason);
+
+        return $rejected;
     }
 
     /** Ask the requester for more details: a public comment, and the task stays in triage. */

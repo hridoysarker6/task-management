@@ -35,11 +35,12 @@ class TaskListController extends ProjectViewController
         $query = TaskFilters::apply(Task::visibleTo($me)->where('project_id', $project->id), $filters, $me);
 
         $rows = TaskFilters::sort($query, $sort, $dir)
-            ->with(['project', 'status', 'assignee.user:id,name', 'reporter.user:id,name', 'labels'])
+            ->with(['project', 'status', 'assignee.user:id,name', 'reporter.user:id,name', 'labels', 'sprint:id,name'])
             ->paginate($perPage)->withQueryString()
             ->through(fn (Task $t) => TaskPresenter::row($t, ! $me->isExternal()) + [
                 'reporter' => ['id' => $t->reporter_id, 'name' => $t->reporter->user->name],
                 'labels' => $t->labels->map->only(['id', 'name', 'color'])->values(),
+                'sprint' => $t->sprint ? ['id' => $t->sprint->id, 'name' => $t->sprint->name] : null,
                 'created_at' => $t->created_at->toDateString(),
                 'updated_at' => $t->updated_at?->toDateString(),
             ]);
@@ -76,6 +77,7 @@ class TaskListController extends ProjectViewController
             'assignee_id' => ['nullable', 'integer'],
             'status_id' => ['nullable', 'integer'],
             'label_id' => ['nullable', 'integer'],
+            'sprint_id' => ['nullable', 'integer'],
             'close_children' => ['sometimes', 'boolean'],
             'with_children' => ['sometimes', 'boolean'],
         ]);

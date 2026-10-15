@@ -2,6 +2,9 @@
 import ProjectHeader from '@/Components/Projects/ProjectHeader.vue';
 import TaskBits from '@/Components/Tasks/TaskBits.vue';
 import Avatar from '@/Components/UI/Avatar.vue';
+import BurndownChart from '@/Components/Charts/BurndownChart.vue';
+import VelocityChart from '@/Components/Charts/VelocityChart.vue';
+import HealthBadge from '@/Components/Projects/HealthBadge.vue';
 import Btn from '@/Components/UI/Btn.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
@@ -17,7 +20,25 @@ const props = defineProps({
     triageCount: { type: Number, default: null },
     canCreateTask: { type: Boolean, default: false },
     canSeeTrash: { type: Boolean, default: false },
+    progress: { type: Object, default: null },
+    health: { type: Object, default: null },
+    burndown: { type: Object, default: null },
+    velocity: { type: Object, default: null },
+    activity: { type: Array, default: () => [] },
 });
+
+const when = (iso) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+const describe = (a) => {
+    switch (a.event) {
+        case 'created': return 'created';
+        case 'status_changed': return `moved from ${a.old ?? '—'} to ${a.new ?? '—'}`;
+        case 'assigned': return a.new ? `assigned to ${a.new}` : 'unassigned';
+        case 'commented': return 'commented on';
+        case 'work_logged': return 'logged work on';
+        case 'updated': return `changed ${a.field ?? 'a field'} of`;
+        default: return a.event.replaceAll('_', ' ');
+    }
+};
 
 const createTask = () => window.dispatchEvent(new CustomEvent('create-task', { detail: { projectId: props.project.id } }));
 
@@ -55,6 +76,21 @@ const triageLabel = { off: 'Off', external_only: 'External stakeholders only', a
                     </dl>
                 </section>
 
+                <section v-if="progress" class="rounded-xl border border-gray-200 bg-white p-5" aria-label="Progress">
+                    <div class="mb-2 flex items-center gap-3">
+                        <h2 class="text-sm font-semibold text-gray-900">Progress</h2>
+                        <HealthBadge v-if="health" :health="health" />
+                        <span class="ml-auto text-sm text-gray-500">{{ progress.percent }}% · {{ progress.done }} of {{ progress.total }} {{ progress.mode === 'points' ? 'points' : 'tasks' }}</span>
+                    </div>
+                    <div class="h-2.5 overflow-hidden rounded-full bg-gray-100" role="progressbar" :aria-valuenow="progress.percent" aria-valuemin="0" aria-valuemax="100"><div class="h-full rounded-full bg-green-500" :style="{ width: progress.percent + '%' }" /></div>
+                    <ul v-if="health?.reasons.length" class="mt-3 list-disc space-y-0.5 pl-5 text-sm text-gray-600"><li v-for="r in health.reasons" :key="r">{{ r }}</li></ul>
+
+                    <div v-if="burndown || velocity?.sprints.length" class="mt-5 grid gap-5 border-t border-gray-100 pt-4 md:grid-cols-2">
+                        <div v-if="burndown"><h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Burndown · {{ burndown.sprint.name }}</h3><BurndownChart :days="burndown.days" :committed="burndown.committed" :height="150" /></div>
+                        <div v-if="velocity?.sprints.length"><h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Velocity</h3><VelocityChart :sprints="velocity.sprints" :average="velocity.average" /></div>
+                    </div>
+                </section>
+
                 <section class="rounded-xl border border-gray-200 bg-white p-5">
                     <div class="mb-3 flex items-center justify-between">
                         <h2 class="text-sm font-semibold text-gray-900">Recent tasks <span class="font-normal text-gray-400">({{ taskCount }})</span></h2>
@@ -86,6 +122,16 @@ const triageLabel = { off: 'Off', external_only: 'External stakeholders only', a
             </div>
 
             <aside class="space-y-6">
+                <section v-if="activity.length" class="rounded-xl border border-gray-200 bg-white p-5" aria-label="Recent activity">
+                    <h2 class="mb-3 text-sm font-semibold text-gray-900">Recent activity</h2>
+                    <ul class="space-y-2.5">
+                        <li v-for="a in activity" :key="a.id" class="text-sm text-gray-700">
+                            <span class="font-medium text-gray-900">{{ a.actor ?? 'The system' }}</span> {{ describe(a) }}
+                            <Link :href="route('tasks.show', a.task)" class="font-mono text-xs font-semibold text-indigo-700 hover:underline">{{ a.task }}</Link>
+                            <span class="block text-xs text-gray-400">{{ when(a.created_at) }}</span>
+                        </li>
+                    </ul>
+                </section>
                 <section class="rounded-xl border border-gray-200 bg-white p-5">
                     <div class="mb-3 flex items-center justify-between">
                         <h2 class="text-sm font-semibold text-gray-900">Members ({{ memberCount }})</h2>

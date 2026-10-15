@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Membership;
 use App\Models\ProjectStatus;
+use App\Models\Sprint;
 use App\Models\Task;
 use App\Services\TaskActivityLogger;
 use App\Support\Tenancy\CurrentOrganization;
@@ -105,6 +106,7 @@ class TaskObserver
             'priority' => Task::PRIORITIES[(int) $value] ?? (string) $value,
             'parent_id' => ($t = Task::withTrashed()->with('project')->find($value)) ? $t->key_label : (string) $value,
             'reporter_id' => $this->person($value),
+            'sprint_id' => Sprint::withTrashed()->where('id', $value)->value('name') ?? (string) $value,
             'start_date', 'due_date' => substr((string) $value, 0, 10),
             default => (string) $value,
         };

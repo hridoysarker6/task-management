@@ -6,9 +6,9 @@ import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 // Title bar and tabs shared by every project page.
-defineProps({
+const props = defineProps({
     project: { type: Object, required: true }, // { id, key, name, status, is_archived, abilities }
-    active: { type: String, required: true }, // overview | members | workflow | labels | settings
+    active: { type: String, required: true }, // overview | board | sprints | backlog | list | members | workflow | labels | settings
 });
 
 const statusColor = { active: 'green', on_hold: 'yellow', completed: 'blue', archived: 'gray' };
@@ -19,6 +19,7 @@ const { can } = usePermissions();
 const tabs = computed(() => [
     { key: 'overview', label: 'Overview', route: 'projects.show' },
     { key: 'board', label: 'Board', route: 'projects.board' },
+    ...(props.project.show_sprints ? [{ key: 'sprints', label: 'Sprints', route: 'projects.sprints.index' }] : []),
     ...(can('backlog.view') ? [{ key: 'backlog', label: 'Backlog', route: 'projects.backlog' }] : []),
     { key: 'list', label: 'List', route: 'projects.tasks.index' },
     { key: 'members', label: 'Members', route: 'projects.members.index' },

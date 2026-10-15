@@ -32,6 +32,7 @@ class InvitationService
     public function invite(Organization $organization, ?Membership $by, array $data, bool $send = true): Invitation
     {
         $invitation = DB::transaction(fn () => $this->create($organization, $by, $data));
+        app(AuditLogger::class)->record('invitation.sent', $invitation, null, ['email' => $invitation->email, 'role_id' => $invitation->role_id], $invitation->email);
 
         if ($send) {
             $this->send($invitation, $by);
@@ -105,7 +106,7 @@ class InvitationService
         $inviter = $by ?? $invitation->inviter;
 
         Notification::route('mail', $invitation->email)
-            ->notify(new UserInvited($invitation, $organization, $inviter?->user?->name));
+            ->notify(new UserInvited($invitation, $organization, $inviter?->user?->name, $invitation->plainToken));
     }
 
     /** Renew the link (new token, 7 more days) and email it again. */
@@ -131,6 +132,8 @@ class InvitationService
             $invitation->plainToken = $token;
         });
 
+        app(AuditLogger::class)->record('invitation.resent', $invitation, null, ['email' => $invitation->email], $invitation->email);
+
         $this->send($invitation, $by);
 
         return $invitation;
@@ -143,6 +146,7 @@ class InvitationService
         }
 
         $invitation->forceFill(['revoked_at' => now()])->save();
+        app(AuditLogger::class)->record('invitation.revoked', $invitation, null, null, $invitation->email);
     }
 
     public function findByToken(string $token): ?Invitation

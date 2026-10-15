@@ -21,6 +21,9 @@ const props = defineProps({
     project: { type: Object, required: true },
     breadcrumbs: { type: Array, default: () => [] },
     parent: { type: Object, default: null },
+    sprint: { type: Object, default: null },
+    worklogs: { type: Array, default: () => [] },
+    rollup: { type: Object, default: null },
     children: { type: Array, default: () => [] },
     progress: { type: Object, default: null },
     comments: { type: Array, default: () => [] },
@@ -225,6 +228,9 @@ const describe = (x) => {
         case 'triage_accepted': return 'accepted the request';
         case 'triage_rejected': return `rejected the request: ${x.new}`;
         case 'triage_info_requested': return 'asked for more information';
+        case 'work_logged': return `logged ${formatDuration(Number(x.new))} of work`;
+        case 'work_updated': return `changed a work entry to ${formatDuration(Number(x.new))}`;
+        case 'work_deleted': return `removed a work entry of ${formatDuration(Number(x.old))}`;
         case 'deleted': return 'deleted the task';
         case 'restored': return 'restored the task';
         default: return x.event;
@@ -232,6 +238,36 @@ const describe = (x) => {
 };
 const tab = ref('comments');
 const labelColor = (c) => c;
+
+// --- time tracking --------------------------------------------------------------------------
+const todayIso = () => new Date().toISOString().slice(0, 10);
+const logOpen = ref(false);
+const editingLog = ref(null);
+const logError = ref('');
+const logForm = useForm({ work_date: todayIso(), duration: '', note: '' });
+
+const openLog = (entry = null) => {
+    editingLog.value = entry;
+    logError.value = '';
+    logForm.clearErrors();
+    logForm.defaults({ work_date: entry?.date ?? todayIso(), duration: entry ? formatDuration(entry.minutes) : '', note: entry?.note ?? '' }).reset();
+    logOpen.value = true;
+};
+const saveLog = () => {
+    const minutes = parseDuration(logForm.duration);
+    if (!minutes || Number.isNaN(minutes) || minutes < 1) {
+        logError.value = 'Enter the time as 1h 30m, 45m or 1.5h.';
+        return;
+    }
+    logError.value = '';
+    const options = { preserveScroll: true, onSuccess: () => (logOpen.value = false) };
+    logForm.transform((d) => ({ work_date: d.work_date, minutes, note: d.note }));
+    editingLog.value ? logForm.put(route('worklogs.update', editingLog.value.id), options) : logForm.post(route('tasks.worklogs.store', props.task.key), options);
+};
+const removeLog = (entry) => router.delete(route('worklogs.destroy', entry.id), { preserveScroll: true });
+const spentPct = computed(() => (props.task.original_estimate_min ? Math.min(100, Math.round((props.task.time_spent_min / props.task.original_estimate_min) * 100)) : 0));
+const overEstimate = computed(() => props.task.original_estimate_min && props.task.time_spent_min > props.task.original_estimate_min);
+const rollupPct = computed(() => (props.rollup?.original ? Math.min(100, Math.round((props.rollup.spent / props.rollup.original) * 100)) : 0));
 </script>
 
 <template>
@@ -440,6 +476,12 @@ const labelColor = (c) => c;
                         </div>
                     </div>
 
+                    <div v-if="sprint">
+                        <span class="block text-xs font-semibold uppercase tracking-wide text-gray-400">Sprint</span>
+                        <Link :href="route('projects.sprints.index', sprint.project_id)" class="mt-1 inline-block text-indigo-700 hover:underline">{{ sprint.name }}</Link>
+                        <span class="ml-1 text-xs capitalize text-gray-400">{{ sprint.status }}</span>
+                    </div>
+
                     <div v-if="parentTypes">
                         <span class="block text-xs font-semibold uppercase tracking-wide text-gray-400">{{ task.type === 'subtask' ? 'Parent' : 'Epic' }}</span>
                         <div v-if="parent && !changingParent" class="mt-1 flex items-center gap-2"><Link :href="route('tasks.show', parent.key)" class="font-mono text-xs font-semibold text-indigo-700 hover:underline">{{ parent.key }}</Link><span class="truncate">{{ parent.title }}</span></div>
@@ -509,9 +551,82 @@ const labelColor = (c) => c;
                     </div>
                 </section>
 
+                <section v-if="abilities.effort" class="space-y-3 rounded-xl border border-gray-200 bg-white p-4 text-sm" aria-label="Time tracking">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400">Time</h2>
+                        <Btn v-if="abilities.log_work" size="sm" @click="openLog()"><PlusIcon class="h-4 w-4" /> Log work</Btn>
+                    </div>
+
+                    <div v-if="task.original_estimate_min">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>{{ formatDuration(task.time_spent_min) || '0m' }} spent of {{ formatDuration(task.original_estimate_min) }}</span>
+                            <span :class="overEstimate ? 'font-medium text-red-600' : ''">{{ overEstimate ? formatDuration(task.time_spent_min - task.original_estimate_min) + ' over' : (formatDuration(task.remaining_estimate_min ?? 0) || '0m') + ' left' }}</span>
+                        </div>
+                        <div class="mt-1 h-2 overflow-hidden rounded-full bg-gray-100" role="progressbar" :aria-valuenow="spentPct" aria-valuemin="0" aria-valuemax="100">
+                            <div :class="['h-full rounded-full', overEstimate ? 'bg-red-500' : 'bg-indigo-500']" :style="{ width: spentPct + '%' }" />
+                        </div>
+                    </div>
+                    <p v-else class="text-gray-500">{{ formatDuration(task.time_spent_min) || '0m' }} spent. No estimate yet.</p>
+
+                    <div v-if="rollup" class="rounded-lg bg-purple-50 p-3">
+                        <div class="flex justify-between text-xs text-purple-800">
+                            <span>All {{ rollup.tasks }} tasks in this epic</span>
+                            <span>{{ formatDuration(rollup.spent) || '0m' }} of {{ formatDuration(rollup.original) || '0m' }}</span>
+                        </div>
+                        <div class="mt-1 h-2 overflow-hidden rounded-full bg-white"><div class="h-full rounded-full bg-purple-500" :style="{ width: rollupPct + '%' }" /></div>
+                    </div>
+
+                    <ul v-if="worklogs.length" class="divide-y divide-gray-100" aria-label="Work log">
+                        <li v-for="w in worklogs" :key="w.id" class="py-2">
+                            <div class="flex items-center gap-2">
+                                <Avatar :name="w.who.name" size="sm" />
+                                <span class="min-w-0 flex-1 truncate text-gray-800">{{ w.who.name }}</span>
+                                <span class="font-medium text-gray-900">{{ formatDuration(w.minutes) }}</span>
+                            </div>
+                            <div class="mt-0.5 flex items-center gap-2 pl-8 text-xs text-gray-500">
+                                <span>{{ fmtDate(w.date) }}</span>
+                                <span v-if="w.locked" class="rounded bg-gray-100 px-1.5 py-0.5 text-gray-500" title="The timesheet for this week is submitted">Locked</span>
+                                <span v-if="w.can_edit" class="ml-auto flex gap-2">
+                                    <button class="hover:text-indigo-600" :aria-label="'Edit entry of ' + w.who.name" @click="openLog(w)">Edit</button>
+                                    <button class="hover:text-red-600" :aria-label="'Delete entry of ' + w.who.name" @click="removeLog(w)">Delete</button>
+                                </span>
+                            </div>
+                            <p v-if="w.note" class="mt-0.5 pl-8 text-gray-600">{{ w.note }}</p>
+                        </li>
+                    </ul>
+                </section>
+
                 <Btn v-if="abilities.delete" variant="ghost" size="sm" class="!text-red-600" @click="deleting = true"><TrashIcon class="h-4 w-4" /> Delete task</Btn>
             </aside>
         </div>
+
+        <!-- Log work -->
+        <Modal :show="logOpen" max-width="md" @close="logOpen = false">
+            <form class="space-y-4 p-6" @submit.prevent="saveLog">
+                <h2 class="text-lg font-semibold text-gray-900">{{ editingLog ? 'Edit entry' : 'Log work' }} · {{ task.key }}</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="lw-date">Date</label>
+                        <input id="lw-date" v-model="logForm.work_date" type="date" required :max="todayIso()" class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                        <InputError class="mt-1" :message="logForm.errors.work_date" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="lw-time">Time spent</label>
+                        <input id="lw-time" v-model="logForm.duration" type="text" required placeholder="1h 30m" class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                        <InputError class="mt-1" :message="logError || logForm.errors.minutes" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="lw-note">What did you do? <span class="font-normal text-gray-400">(optional)</span></label>
+                    <textarea id="lw-note" v-model="logForm.note" rows="2" maxlength="500" class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    <InputError class="mt-1" :message="logForm.errors.note || logForm.errors.task || logForm.errors.work_log" />
+                </div>
+                <div class="flex justify-end gap-2">
+                    <Btn variant="secondary" @click="logOpen = false">Cancel</Btn>
+                    <Btn type="submit" :loading="logForm.processing">Save</Btn>
+                </div>
+            </form>
+        </Modal>
 
         <!-- Close a parent with open sub-tasks -->
         <ConfirmDialog

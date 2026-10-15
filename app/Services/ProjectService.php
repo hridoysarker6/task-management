@@ -8,6 +8,7 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\Scopes\OrganizationScope;
+use App\Models\Sprint;
 use App\Support\DefaultWorkflow;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -86,6 +87,10 @@ class ProjectService
     {
         $this->assertEditable($project);
 
+        if (array_key_exists('uses_sprints', $data) && ! $data['uses_sprints'] && $project->uses_sprints && Sprint::where('project_id', $project->id)->where('status', Sprint::ACTIVE)->exists()) {
+            throw ValidationException::withMessages(['uses_sprints' => 'Complete the active sprint before switching sprints off.']);
+        }
+
         $project->fill(collect($data)->only(['uses_sprints', 'triage_mode', 'client_can_see_all', 'allow_self_close', 'progress_mode'])->all())->save();
 
         return $project;
@@ -127,6 +132,8 @@ class ProjectService
 
     public function delete(Project $project): void
     {
+        app(AuditLogger::class)->record('project.deleted', $project, ['key' => $project->key, 'name' => $project->name], null, "{$project->key} {$project->name}");
+
         $project->delete();
     }
 

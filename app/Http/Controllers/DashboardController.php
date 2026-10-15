@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Settings\OnboardingController;
+use App\Services\DashboardService;
 use App\Support\Tenancy\CurrentOrganization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -11,7 +12,7 @@ use Inertia\Inertia;
 /** Sends each kind of signed-in person to the right home page. */
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request, CurrentOrganization $current)
+    public function __invoke(Request $request, CurrentOrganization $current, DashboardService $dashboard)
     {
         $user = $request->user();
 
@@ -36,6 +37,9 @@ class DashboardController extends Controller
             }
         }
 
-        return Inertia::render('Dashboard', ['onboarding' => $onboarding]);
+        return Inertia::render('Dashboard', [
+            'onboarding' => $onboarding,
+            'dashboard' => $current->check() && $current->membership ? $dashboard->build($current->membership) : null,
+        ]);
     }
 }

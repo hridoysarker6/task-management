@@ -31,7 +31,7 @@ class CommentService
         // External people can only ever write public comments.
         $internal = $author->isExternal() ? false : $internal;
 
-        return DB::transaction(function () use ($task, $author, $body, $internal) {
+        $comment = DB::transaction(function () use ($task, $author, $body, $internal) {
             $comment = Comment::create([
                 'task_id' => $task->id,
                 'membership_id' => $author->id,
@@ -47,6 +47,10 @@ class CommentService
 
             return $comment;
         });
+
+        app(Notifier::class)->commented($task, $comment, $author);
+
+        return $comment;
     }
 
     /** Edit the text (and the Internal/Public choice) of your own comment. */

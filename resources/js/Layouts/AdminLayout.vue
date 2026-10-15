@@ -4,7 +4,7 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import Avatar from '@/Components/UI/Avatar.vue';
 import FlashMessages from '@/Components/UI/FlashMessages.vue';
-import { Bars3Icon, BuildingOffice2Icon, HomeIcon, ShieldCheckIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, BuildingOffice2Icon, ClipboardDocumentListIcon, ExclamationTriangleIcon, HomeIcon, ShieldCheckIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -16,6 +16,8 @@ const sidebarOpen = ref(false);
 const nav = [
     { label: 'Dashboard', icon: HomeIcon, routeName: 'admin.dashboard', match: 'admin.dashboard' },
     { label: 'Companies', icon: BuildingOffice2Icon, routeName: 'admin.companies.index', match: 'admin.companies.*' },
+    { label: 'Audit log', icon: ClipboardDocumentListIcon, routeName: 'admin.audit.index', match: 'admin.audit.*' },
+    { label: 'Failed jobs', icon: ExclamationTriangleIcon, routeName: 'admin.failed-jobs.index', match: 'admin.failed-jobs.*' },
     { label: 'Default roles', icon: ShieldCheckIcon, routeName: 'admin.role-template.index', match: 'admin.role-template.*' },
 ];
 

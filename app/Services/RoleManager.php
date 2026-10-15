@@ -36,6 +36,8 @@ class RoleManager
                 $role->permissions()->sync($copyFrom->permissions()->pluck('permissions.id')->all());
             }
 
+            app(AuditLogger::class)->record('role.created', $role, null, $role->only(['name', 'level', 'data_scope', 'is_external']), $role->name, platform: $organizationId === null, organizationId: $organizationId);
+
             return $role;
         });
     }
@@ -45,7 +47,13 @@ class RoleManager
     {
         $this->assertEditable($role);
 
+        $before = $role->only(['name', 'level', 'data_scope', 'description', 'is_external']);
         $role->fill(collect($data)->only(['name', 'level', 'data_scope', 'description', 'is_external'])->all())->save();
+
+        [$old, $new] = AuditLogger::diff($before, $role->only(array_keys($before)));
+        if ($new) {
+            app(AuditLogger::class)->record('role.updated', $role, $old, $new, $role->name, platform: $role->organization_id === null);
+        }
 
         return $role;
     }
@@ -59,6 +67,8 @@ class RoleManager
                 'role' => 'This role is still assigned to people. Move them to another role first.',
             ]);
         }
+
+        app(AuditLogger::class)->record('role.deleted', $role, $role->only(['name', 'level', 'data_scope']), null, $role->name, platform: $role->organization_id === null);
 
         $role->delete();
     }
@@ -87,12 +97,20 @@ class RoleManager
                     continue;
                 }
 
+                $scopeBefore = $role->data_scope;
+                $permsBefore = $role->permissions()->pluck('permissions.name')->sort()->values()->all();
+
                 $role->update(['data_scope' => $entry['data_scope']]);
                 $role->permissions()->sync(
                     collect($entry['permissions'])->map(fn ($name) => $permissionIds[$name] ?? null)->filter()->unique()->values()->all()
                 );
 
                 $this->permissions->forgetRole($role);
+
+                $permsAfter = $role->permissions()->pluck('permissions.name')->sort()->values()->all();
+                if ($permsBefore !== $permsAfter || $scopeBefore !== $role->data_scope) {
+                    app(AuditLogger::class)->record('role.permissions_updated', $role, ['data_scope' => $scopeBefore, 'removed' => array_values(array_diff($permsBefore, $permsAfter))], ['data_scope' => $role->data_scope, 'added' => array_values(array_diff($permsAfter, $permsBefore))], $role->name, platform: $organizationId === null, organizationId: $organizationId);
+                }
             }
         });
     }

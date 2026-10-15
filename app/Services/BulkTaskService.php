@@ -7,6 +7,7 @@ use App\Models\Membership;
 use App\Models\Project;
 use App\Models\ProjectStatus;
 use App\Models\Scopes\OrganizationScope;
+use App\Models\Sprint;
 use App\Models\Task;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
@@ -18,15 +19,15 @@ use Illuminate\Validation\ValidationException;
  */
 class BulkTaskService
 {
-    public const ACTIONS = ['assign', 'status', 'label_add', 'label_remove', 'delete'];
+    public const ACTIONS = ['assign', 'status', 'label_add', 'label_remove', 'sprint', 'delete'];
 
     public const MAX = 200;
 
-    public function __construct(private TaskService $tasks) {}
+    public function __construct(private TaskService $tasks, private SprintService $sprints) {}
 
     /**
      * @param  list<int>  $ids
-     * @param  array<string, mixed>  $options  assignee_id | status_id (+ close_children) | label_id | with_children
+     * @param  array<string, mixed>  $options  assignee_id | status_id (+ close_children) | label_id | sprint_id (empty = back to the backlog) | with_children
      * @return array{updated:int,failed:list<array{key:string,reason:string}>}
      *
      * @throws ValidationException
@@ -42,7 +43,7 @@ class BulkTaskService
         }
 
         // Resolve what the action points at once, so a bad choice fails before anything changes.
-        $assignee = $status = $label = null;
+        $assignee = $status = $label = $sprint = null;
         if ($action === 'assign' && ! empty($options['assignee_id'])) {
             $assignee = Membership::withoutGlobalScope(OrganizationScope::class)->with('role')
                 ->where('organization_id', $project->organization_id)->find($options['assignee_id'])
@@ -55,6 +56,11 @@ class BulkTaskService
         if (in_array($action, ['label_add', 'label_remove'], true)) {
             $label = Label::where('project_id', $project->id)->find($options['label_id'] ?? 0)
                 ?? throw ValidationException::withMessages(['label_id' => 'Choose a label of this project.']);
+        }
+
+        if ($action === 'sprint' && ! empty($options['sprint_id'])) {
+            $sprint = Sprint::where('project_id', $project->id)->open()->find($options['sprint_id'])
+                ?? throw ValidationException::withMessages(['sprint_id' => 'Choose a planned or active sprint of this project.']);
         }
 
         // Only tasks of this project that the person can see; anything else is reported, not touched.
@@ -73,7 +79,7 @@ class BulkTaskService
             }
 
             try {
-                $this->one($task, $actor, $action, $assignee, $status, $label, $options);
+                $this->one($task, $actor, $action, $assignee, $status, $label, $sprint, $options);
                 $updated++;
             } catch (ValidationException $e) {
                 $failed[] = ['key' => $task->key_label, 'reason' => (string) collect($e->errors())->flatten()->first()];
@@ -86,12 +92,13 @@ class BulkTaskService
     }
 
     /** @param array<string, mixed> $options */
-    private function one(Task $task, Membership $actor, string $action, ?Membership $assignee, ?ProjectStatus $status, ?Label $label, array $options): void
+    private function one(Task $task, Membership $actor, string $action, ?Membership $assignee, ?ProjectStatus $status, ?Label $label, ?Sprint $sprint, array $options): void
     {
         match ($action) {
             'assign' => $this->assign($task, $actor, $assignee),
             'status' => $this->status($task, $actor, $status, (bool) ($options['close_children'] ?? false)),
             'label_add', 'label_remove' => $this->label($task, $actor, $label, $action === 'label_add'),
+            'sprint' => $this->sprint($task, $sprint),
             'delete' => $this->delete($task, (bool) ($options['with_children'] ?? false)),
             default => throw new \LogicException("Unknown bulk action {$action}."),
         };
@@ -117,6 +124,14 @@ class BulkTaskService
         $ids = $add ? array_values(array_unique([...$ids, $label->id])) : array_values(array_diff($ids, [$label->id]));
 
         $this->tasks->update($task, $actor, ['labels' => $ids]);
+    }
+
+    private function sprint(Task $task, ?Sprint $sprint): void
+    {
+        Gate::authorize('sprint.edit');
+        Gate::authorize('update', $task);
+
+        $sprint ? $this->sprints->addTask($sprint, $task) : $this->sprints->removeTask($task);
     }
 
     private function delete(Task $task, bool $withChildren): void

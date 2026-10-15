@@ -20,7 +20,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['apply']);
 
-const blank = () => ({ q: '', status: [], assignee: [], reporter: [], type: [], priority: [], label: [], mine: false, overdue: false, created_from: '', created_to: '', due_from: '', due_to: '' });
+const blank = () => ({ q: '', status: [], assignee: [], reporter: [], type: [], priority: [], label: [], sprint: [], mine: false, overdue: false, created_from: '', created_to: '', due_from: '', due_to: '' });
 const draft = reactive({ ...blank(), ...props.filters });
 watch(() => props.filters, (f) => Object.assign(draft, blank(), f));
 
@@ -64,6 +64,7 @@ const typeOptions = computed(() => props.options.types.map((t) => ({ value: t, l
 const priorityOptions = computed(() => props.options.priorities.map((p) => ({ value: p.value, label: p.label })));
 const assigneeOptions = computed(() => [{ value: 'none', label: 'Unassigned' }, ...opt(props.options.people)]);
 const advanced = computed(() => props.mode === 'list');
+const sprintOptions = computed(() => [{ value: 'none', label: 'No sprint' }, ...props.options.sprints.map((s) => ({ value: s.id, label: s.name }))]);
 
 // --- saved filters ---------------------------------------------------------------------------
 const menu = ref(false);
@@ -125,6 +126,7 @@ const remove = (f) => router.delete(route('saved-filters.destroy', f.id), { pres
             <MultiSelect v-if="advanced" label="Reporter" :model-value="draft.reporter" :options="opt(options.people)" @update:model-value="set('reporter', $event)" />
             <MultiSelect label="Type" :model-value="draft.type" :options="typeOptions" @update:model-value="set('type', $event)" />
             <MultiSelect label="Priority" :model-value="draft.priority" :options="priorityOptions" @update:model-value="set('priority', $event)" />
+            <MultiSelect v-if="advanced && options.sprints?.length" label="Sprint" :model-value="draft.sprint" :options="sprintOptions" @update:model-value="set('sprint', $event)" />
             <MultiSelect v-if="options.labels.length" label="Label" :model-value="draft.label" :options="opt(options.labels)" @update:model-value="set('label', $event)" />
 
             <label v-if="advanced" class="flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm" :class="draft.overdue ? 'border-red-300 bg-red-50 text-red-700' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'">

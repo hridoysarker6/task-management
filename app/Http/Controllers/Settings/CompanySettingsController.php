@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
+use App\Services\AuditLogger;
 use App\Support\Tenancy\CurrentOrganization;
 use DateTimeZone;
 use Illuminate\Http\RedirectResponse;
@@ -69,11 +70,18 @@ class CompanySettingsController extends Controller
             $org->logo_path = null;
         }
 
+        $before = $org->only(['timezone', 'date_format', 'working_days', 'logo_path']);
+
         $org->fill([
             'timezone' => $data['timezone'],
             'date_format' => $data['date_format'],
             'working_days' => collect($data['working_days'])->map(fn ($d) => (int) $d)->sort()->values()->all(),
         ])->save();
+
+        [$old, $new] = AuditLogger::diff($before, $org->only(array_keys($before)));
+        if ($new) {
+            app(AuditLogger::class)->record('company.settings_updated', $org, $old, $new, $org->name);
+        }
 
         return back()->with('success', 'Company settings saved.');
     }

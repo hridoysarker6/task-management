@@ -55,6 +55,7 @@ class TaskViewsTest extends TestCase
 
     public function test_the_board_has_a_column_per_visible_status_and_the_visible_cards(): void
     {
+        $this->ecp->update(['uses_sprints' => false]);
         $a = $this->task($this->ecp, $this->pm, ['status' => 'To Do']);
         $b = $this->task($this->ecp, $this->pm, ['status' => 'In Progress']);
         $this->task($this->oth, $this->pm);
@@ -79,6 +80,7 @@ class TaskViewsTest extends TestCase
 
     public function test_board_filters_narrow_the_cards(): void
     {
+        $this->ecp->update(['uses_sprints' => false]);
         $mine = $this->task($this->ecp, $this->pm, ['status' => 'To Do', 'assignee_id' => $this->tlA->id, 'type' => 'bug']);
         $this->task($this->ecp, $this->pm, ['status' => 'To Do', 'assignee_id' => $this->dev1->id]);
 
@@ -89,6 +91,7 @@ class TaskViewsTest extends TestCase
 
     public function test_swimlanes_group_by_assignee_with_a_last_lane_for_unassigned(): void
     {
+        $this->ecp->update(['uses_sprints' => false]);
         $this->task($this->ecp, $this->pm, ['status' => 'To Do', 'assignee_id' => $this->tlA->id]);
         $this->task($this->ecp, $this->pm, ['status' => 'To Do']);
 
@@ -101,6 +104,7 @@ class TaskViewsTest extends TestCase
 
     public function test_the_board_only_shows_what_the_viewer_may_see(): void
     {
+        $this->ecp->update(['uses_sprints' => false]);
         $theirs = $this->task($this->ecp, $this->client, ['status' => 'To Do']);
         $other = $this->task($this->ecp, $this->pm, ['status' => 'To Do']);
 

@@ -132,6 +132,8 @@ class RehireService
 
         $former->user->notify(new WelcomeBack($organization, $role));
 
+        app(AuditLogger::class)->record('member.rehired', $former, null, ['role_id' => $role->id, 'role' => $role->name], $former->user->name);
+
         return $former->refresh();
     }
 

@@ -7,7 +7,7 @@ import ConfirmDialog from '@/Components/UI/ConfirmDialog.vue';
 import EmptyState from '@/Components/UI/EmptyState.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref, watch } from 'vue';
 import draggable from 'vuedraggable';
@@ -18,6 +18,7 @@ const props = defineProps({
     tasks: { type: Array, required: true },
     lanes: { type: Array, required: true },
     swimlane: { type: String, required: true },
+    sprint: { type: Object, default: null },
     filters: { type: Object, required: true },
     truncated: Boolean,
     options: { type: Object, required: true },
@@ -110,6 +111,18 @@ const filtered = computed(() => Object.keys(props.filters).length > 0);
                 <Btn v-if="canCreate && !project.is_archived" @click="create"><PlusIcon class="h-4 w-4" /> Create</Btn>
             </template>
         </ProjectHeader>
+
+        <div v-if="project.uses_sprints" class="mb-4 rounded-lg border px-4 py-3 text-sm" :class="sprint ? 'border-indigo-200 bg-indigo-50' : 'border-gray-200 bg-white'">
+            <template v-if="sprint">
+                <strong class="text-indigo-900">{{ sprint.name }}</strong>
+                <span class="ml-2 text-indigo-800">{{ sprint.days_left < 0 ? `${-sprint.days_left} day(s) overdue` : sprint.days_left === 0 ? 'ends today' : `${sprint.days_left} day(s) left` }}</span>
+                <p v-if="sprint.goal" class="mt-1 text-indigo-800">Goal: {{ sprint.goal }}</p>
+            </template>
+            <template v-else>
+                <span class="text-gray-700">No sprint is running, so the board is empty.</span>
+                <Link v-if="project.show_sprints" :href="route('projects.sprints.index', project.id)" class="ml-2 font-medium text-indigo-600 hover:underline">Plan and start a sprint</Link>
+            </template>
+        </div>
 
         <TaskFilterBar mode="board" :filters="filters" :options="options" :saved-filters="savedFilters" :project-id="project.id" @apply="visit($event)" />
 

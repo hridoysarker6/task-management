@@ -3,12 +3,17 @@
 namespace App\Notifications;
 
 use App\Models\Organization;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Queue\SerializesModels;
 
 /** Sent to System Admins when an application reaches the review queue (or is resubmitted). */
-class CompanyRegistered extends Notification
+class CompanyRegistered extends Notification implements ShouldQueue
 {
+    use Queueable, SerializesModels;
+
     public function __construct(public Organization $organization, public bool $resubmitted = false) {}
 
     public function via(object $notifiable): array

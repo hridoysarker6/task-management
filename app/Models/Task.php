@@ -104,6 +104,12 @@ class Task extends Model
         return $this->belongsTo(Project::class)->withTrashed();
     }
 
+    /** @return BelongsTo<Sprint, $this> */
+    public function sprint(): BelongsTo
+    {
+        return $this->belongsTo(Sprint::class)->withTrashed();
+    }
+
     /** @return BelongsTo<ProjectStatus, $this> */
     public function status(): BelongsTo
     {

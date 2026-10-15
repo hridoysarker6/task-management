@@ -1,18 +1,21 @@
 <script setup>
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
+import NotificationBell from '@/Components/NotificationBell.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import Avatar from '@/Components/UI/Avatar.vue';
 import FlashMessages from '@/Components/UI/FlashMessages.vue';
 import {
     Bars3Icon,
-    BellIcon,
     BriefcaseIcon,
     BuildingOffice2Icon,
     BuildingOfficeIcon,
     ChartBarIcon,
     ChevronUpDownIcon,
     ClipboardDocumentCheckIcon,
+    ClipboardDocumentListIcon,
+    ClockIcon,
+    MagnifyingGlassIcon,
     Cog6ToothIcon,
     HomeIcon,
     ShareIcon,
@@ -22,17 +25,43 @@ import {
     UsersIcon,
     XMarkIcon,
 } from '@heroicons/vue/24/outline';
+import GlobalSearch from '@/Components/GlobalSearch.vue';
 import CreateTaskModal from '@/Components/Tasks/CreateTaskModal.vue';
 import { usePermissions } from '@/Composables/usePermissions';
 import { Link, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const sidebarOpen = ref(false);
-const { can } = usePermissions();
+const { can, canAny } = usePermissions();
 const organizations = computed(() => page.props.organizations ?? []);
 const openCreate = () => window.dispatchEvent(new CustomEvent('create-task'));
+
+// --- search and keyboard shortcuts: Ctrl/Cmd+K or / opens search, C creates a task --------------------
+const searchOpen = ref(false);
+const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
+const onShortcut = (e) => {
+    if (!page.props.currentOrganization) return;
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchOpen.value = !searchOpen.value;
+        return;
+    }
+    // Plain keys only count when nobody is typing, no dialog is open and no modifier is held.
+    if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || document.querySelector('[role="dialog"]')) return;
+
+    if (e.key === '/') {
+        e.preventDefault();
+        searchOpen.value = true;
+    } else if (e.key.toLowerCase() === 'c' && can('task.create')) {
+        e.preventDefault();
+        openCreate();
+    }
+};
+onMounted(() => window.addEventListener('keydown', onShortcut));
+onBeforeUnmount(() => window.removeEventListener('keydown', onShortcut));
 
 // Nav items are added phase by phase. `routeName: null` = not built yet (shown disabled).
 // `permission` hides the item from people who lack it.
@@ -40,15 +69,18 @@ const allNav = [
     { label: 'Dashboard', icon: HomeIcon, routeName: 'dashboard' },
     { label: 'My Work', icon: ClipboardDocumentCheckIcon, routeName: 'my-work', permission: 'task.view' },
     { label: 'Projects', icon: BriefcaseIcon, routeName: 'projects.index', match: 'projects.*', permission: 'project.view' },
+    { label: 'Timesheet', icon: ClockIcon, routeName: 'timesheet', permission: 'worklog.create' },
+    { label: 'Team time', icon: ClipboardDocumentListIcon, routeName: 'timesheets.team', permissionAny: ['worklog.view_team', 'timesheet.approve'] },
     { label: 'Team', icon: UserGroupIcon, routeName: 'team', permission: 'dashboard.team' },
     { label: 'People', icon: UsersIcon, routeName: 'people.index', match: 'people.*', permission: 'user.view' },
     { label: 'Org chart', icon: ShareIcon, routeName: 'orgchart', permission: 'orgchart.view' },
-    { label: 'Reports', icon: ChartBarIcon, routeName: null },
+    { label: 'Reports', icon: ChartBarIcon, routeName: 'reports.index', match: 'reports.*', permission: 'report.view' },
     { label: 'Company', icon: Cog6ToothIcon, routeName: 'settings.company.edit', match: 'settings.company.*', permission: 'company.view_settings', section: 'Settings' },
     { label: 'Departments', icon: BuildingOfficeIcon, routeName: 'departments.index', match: 'departments.*', permission: 'department.view' },
+    { label: 'Audit log', icon: ClipboardDocumentListIcon, routeName: 'audit.index', match: 'audit.*', permission: 'audit.view', section: 'Settings' },
     { label: 'Roles & Permissions', icon: ShieldCheckIcon, routeName: 'roles.index', match: 'roles.*', permission: 'role.view' },
 ];
-const nav = computed(() => allNav.filter((item) => !item.permission || can(item.permission)));
+const nav = computed(() => allNav.filter((item) => (!item.permission || can(item.permission)) && (!item.permissionAny || canAny(...item.permissionAny))));
 
 // The first visible item of the settings group gets a small heading above it.
 const sectionStart = computed(() => {
@@ -69,6 +101,7 @@ const linkClass = (item) =>
     <div class="min-h-screen bg-gray-50">
         <FlashMessages />
         <CreateTaskModal v-if="can('task.create')" />
+        <GlobalSearch v-if="$page.props.currentOrganization" :show="searchOpen" @close="searchOpen = false" />
 
         <!-- Mobile backdrop -->
         <div v-if="sidebarOpen" class="fixed inset-0 z-30 bg-gray-900/40 lg:hidden" @click="sidebarOpen = false" />
@@ -110,7 +143,7 @@ const linkClass = (item) =>
                 </template>
             </nav>
 
-            <div class="border-t border-gray-200 p-3 text-xs text-gray-400">v0.1 &middot; Phase 5</div>
+            <div class="border-t border-gray-200 p-3 text-xs text-gray-400">v0.1 &middot; Phase 11</div>
         </aside>
 
         <div class="lg:pl-64">
@@ -142,24 +175,25 @@ const linkClass = (item) =>
                 </div>
 
                 <div class="ml-auto flex items-center gap-2">
+                    <button v-if="$page.props.currentOrganization" type="button" class="flex items-center gap-2 rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-gray-500 hover:bg-gray-50" aria-label="Search (Ctrl+K)" @click="searchOpen = true">
+                        <MagnifyingGlassIcon class="h-4 w-4" /><span class="hidden md:inline">Search</span><kbd class="hidden rounded border border-gray-200 px-1 text-xs text-gray-400 md:inline">Ctrl K</kbd>
+                    </button>
                     <button v-if="can('task.create') && $page.props.currentOrganization" type="button" class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700" @click="openCreate">
                         <PlusIcon class="h-4 w-4" /> Create
                     </button>
-                    <!-- Notifications (wired up in Phase 10) -->
-                    <button class="relative rounded-full p-2 text-gray-500 hover:bg-gray-100" aria-label="Notifications">
-                        <BellIcon class="h-5 w-5" />
-                    </button>
+                    <NotificationBell v-if="$page.props.currentOrganization" />
 
                     <Dropdown align="right" width="48">
                         <template #trigger>
                             <button type="button" class="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100">
-                                <Avatar :name="user.name" />
+                                <Avatar :name="user.name" :src="user.avatar_url" />
                                 <span class="hidden text-sm font-medium text-gray-700 sm:block">{{ user.name }}</span>
                             </button>
                         </template>
                         <template #content>
                             <div class="border-b border-gray-100 px-4 py-2 text-xs text-gray-500">{{ user.email }}</div>
                             <DropdownLink :href="route('profile.edit')">Profile</DropdownLink>
+                            <DropdownLink v-if="$page.props.currentOrganization" :href="route('notifications.preferences')">Notification settings</DropdownLink>
                             <DropdownLink :href="route('logout')" method="post" as="button">Log Out</DropdownLink>
                         </template>
                     </Dropdown>

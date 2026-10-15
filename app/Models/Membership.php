@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -43,7 +44,13 @@ use Illuminate\Support\Facades\DB;
 ])]
 class Membership extends Model
 {
-    use BelongsToOrganization, HasFactory, SoftDeletes;
+    use BelongsToOrganization, HasFactory, Notifiable, SoftDeletes;
+
+    /** Mail goes to the person's login address (the membership itself has none). */
+    public function routeNotificationForMail(): string
+    {
+        return $this->user->email;
+    }
 
     public const INVITED = 'invited';
 

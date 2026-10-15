@@ -27,8 +27,10 @@ class BacklogController extends ProjectViewController
         $filters = $this->cleanFilters($request);
 
         // Not started (category "todo"); sub-tasks follow their parent and are not ranked on their own.
+        // With sprints on, work already planned in a sprint lives on the sprint page instead.
         $query = TaskFilters::apply(
             Task::visibleTo($me)->where('project_id', $project->id)->where('type', '!=', 'subtask')
+                ->when($project->uses_sprints, fn ($q) => $q->whereNull('sprint_id'))
                 ->whereHas('status', fn ($s) => $s->where('category', 'todo')),
             $filters,
             $me,

@@ -94,6 +94,7 @@ class OffboardingService
                 $this->exit($member, $lastDay);
             } else {
                 $member->forceFill(['scheduled_exit_at' => $lastDay->toDateString()])->save();
+                app(AuditLogger::class)->record('member.exit_scheduled', $member, null, ['exit_type' => $data['exit_type'], 'last_day' => $lastDay->toDateString(), 'reason' => $data['exit_reason'] ?? null], $member->user->name);
             }
         });
     }
@@ -102,6 +103,7 @@ class OffboardingService
     public function cancelScheduledExit(Membership $member): void
     {
         $member->forceFill(['scheduled_exit_at' => null, 'exit_type' => null, 'exit_reason' => null, 'exited_by' => null])->save();
+        app(AuditLogger::class)->record('member.exit_cancelled', $member, null, null, $member->user->name);
     }
 
     /**
@@ -113,6 +115,7 @@ class OffboardingService
 
         DB::transaction(function () use ($member, $on) {
             $this->employment->close($member, $on, $member->exit_type, $member->exit_reason);
+            app(AuditLogger::class)->record('member.offboarded', $member, null, ['exit_type' => $member->exit_type, 'reason' => $member->exit_reason, 'left_on' => $on->toDateString()], $member->user->name);
 
             // Anyone still reporting to them (the scheduler path) moves up to their manager.
             $manager = $member->reports_to_id

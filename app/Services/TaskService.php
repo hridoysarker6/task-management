@@ -54,7 +54,7 @@ class TaskService
         $labels = $this->labelIds($project, $data['labels'] ?? []);
         $this->assertDates($data['start_date'] ?? null, $data['due_date'] ?? null);
 
-        return DB::transaction(function () use ($project, $actor, $data, $type, $parent, $assignee, $labels) {
+        $task = DB::transaction(function () use ($project, $actor, $data, $type, $parent, $assignee, $labels) {
             $status = $this->initialStatus($project, $actor);
 
             $task = Task::withoutGlobalScope(OrganizationScope::class)->create([
@@ -91,6 +91,10 @@ class TaskService
 
             return $task->load('project', 'status');
         });
+
+        app(Notifier::class)->taskCreated($task);
+
+        return $task;
     }
 
     /** Which status a new task starts in: Triage for requests, Backlog (the starting status) for team work. */
@@ -214,11 +218,19 @@ class TaskService
         $this->assertProjectOpen($project);
         $this->assertCanAssign($project, $actor, $assignee, $task);
 
+        $previous = $task->assignee_id && $task->assignee_id !== $assignee?->id
+            ? Membership::withoutGlobalScope(OrganizationScope::class)->with('user:id,name')->find($task->assignee_id) : null;
+        $changed = $task->assignee_id !== $assignee?->id;
+
         $task->assignee_id = $assignee?->id;
         $task->save();
 
         if ($assignee) {
             $this->watch($task, $assignee);
+        }
+
+        if ($changed) {
+            app(Notifier::class)->taskAssigned($task, $previous, $assignee);
         }
 
         return $task;
@@ -265,13 +277,17 @@ class TaskService
             }
         }
 
-        return DB::transaction(function () use ($task, $to, $note, $open) {
+        $moved = DB::transaction(function () use ($task, $to, $note, $open) {
             foreach ($open as $child) {
                 $this->move($child, $to);
             }
 
             return $this->move($task, $to, $note);
         });
+
+        app(Notifier::class)->statusChanged($moved, $from, $to);
+
+        return $moved;
     }
 
     /** Put a task in a status without checking who is asking (used for already-validated moves). */

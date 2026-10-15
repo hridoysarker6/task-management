@@ -7,6 +7,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Support\PermissionCatalog;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Effective permissions of a membership = (role permissions + grants) - revokes,
@@ -34,6 +35,8 @@ class PermissionService
             return;
         }
 
+        $before = DB::table('membership_permission_overrides')->where('membership_id', $membership->id)->where('permission_id', $id)->value('effect');
+
         if ($effect === null) {
             $membership->permissionOverrides()->detach($id);
         } else {
@@ -41,6 +44,10 @@ class PermissionService
         }
 
         $this->forget($membership);
+
+        if ($before !== $effect) {
+            app(AuditLogger::class)->record('permission.override_changed', $membership, ['effect' => $before], ['permission' => $permission, 'effect' => $effect], $permission.' for '.$membership->user->name);
+        }
     }
 
     public function forget(Membership $membership): void

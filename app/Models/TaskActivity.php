@@ -31,12 +31,24 @@ class TaskActivity extends Model
     /** Fields that external stakeholders must never see (estimates, effort). */
     public const INTERNAL_FIELDS = ['original_estimate_min', 'remaining_estimate_min', 'time_spent_min', 'story_points'];
 
+    /** Does this line show effort (time logged, estimates)? External stakeholders never see those. */
+    public function isInternal(): bool
+    {
+        return in_array($this->field, self::INTERNAL_FIELDS, true) || str_starts_with($this->event, 'work_');
+    }
+
     protected function casts(): array
     {
         return [
             'meta' => 'array',
             'created_at' => 'datetime',
         ];
+    }
+
+    /** @return BelongsTo<Task, $this> */
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class)->withTrashed();
     }
 
     /** @return BelongsTo<Membership, $this> */

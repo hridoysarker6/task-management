@@ -5,8 +5,13 @@ namespace App\Http\Controllers\Projects;
 use App\Models\Department;
 use App\Models\Membership;
 use App\Models\Project;
+use App\Models\Sprint;
 use App\Models\Task;
+use App\Models\TaskActivity;
+use App\Services\ProgressService;
+use App\Services\ProjectHealthService;
 use App\Services\ProjectService;
+use App\Services\SprintReportService;
 use App\Support\TaskPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -81,13 +86,21 @@ class ProjectController extends ProjectBaseController
         return redirect()->route('projects.show', $project)->with('success', "Project {$project->key} created.");
     }
 
-    public function show(Project $project): Response
+    public function show(Project $project, ProgressService $progress, ProjectHealthService $health, SprintReportService $sprints): Response
     {
         Gate::authorize('view', $project);
 
         $project->load(['manager.user:id,name', 'department:id,name']);
+        $me = $this->current->membership;
+        $internal = ! $me->isExternal();
+        $active = $internal && $project->uses_sprints ? Sprint::where('project_id', $project->id)->where('status', Sprint::ACTIVE)->first() : null;
 
         return Inertia::render('Projects/Show', [
+            'progress' => $progress->forProject($project, $me),
+            'health' => $internal ? $health->assess($project, $me) : null,
+            'burndown' => $active ? ['sprint' => ['id' => $active->id, 'name' => $active->name]] + $sprints->burndown($active) : null,
+            'velocity' => $internal && $project->uses_sprints ? $sprints->velocity($project, 6) : null,
+            'activity' => $this->activity($project, $me),
             'project' => $this->header($project) + [
                 'description' => $project->description,
                 'department' => $project->department?->name,
@@ -113,6 +126,25 @@ class ProjectController extends ProjectBaseController
             'canCreateTask' => Gate::allows('createTask', $project),
             'canSeeTrash' => $this->current->membership->hasPermission('task.delete_any') || Gate::allows('manageMembers', $project),
         ]);
+    }
+
+    /**
+     * The latest happenings on the tasks the viewer can see, newest first. Internal-only fields are hidden from clients.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function activity(Project $project, Membership $me): array
+    {
+        $external = $me->isExternal();
+
+        return TaskActivity::whereIn('task_id', Task::visibleTo($me)->where('tasks.project_id', $project->id)->select('tasks.id'))
+            ->with(['actor.user:id,name', 'task.project'])->latest('id')->limit($external ? 40 : 10)->get()
+            ->reject(fn (TaskActivity $a) => $external && ($a->isInternal() || $a->event === 'commented'))->take(10)
+            ->map(fn (TaskActivity $a) => [
+                'id' => $a->id, 'event' => $a->event, 'field' => $a->field, 'old' => $a->old_value, 'new' => $a->new_value,
+                'actor' => $a->actor?->user?->name, 'task' => $a->task->key_label, 'task_title' => $a->task->title,
+                'created_at' => $a->created_at->toIso8601String(),
+            ])->all();
     }
 
     public function edit(Project $project): Response

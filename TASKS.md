@@ -128,67 +128,67 @@ References: [PLAN.md](PLAN.md) Â· [WORKFLOW.md](WORKFLOW.md) Â· [DATABASE.md
 - [x] 6.3 Board swimlanes (none / assignee / epic)
 - [x] 6.4 Card design: key, title, type icon, priority, assignee avatar, points, due date (red if overdue)
 - [x] 6.5 **List view**: sortable columns, pagination, column picker
-- [x] 6.6 Advanced filters (status, assignee, reporter, sprint, label, date ranges, overdue) (sprint filter backend is in; the sprint picker arrives with Phase 7)
+- [x] 6.6 Advanced filters (status, assignee, reporter, sprint, label, date ranges, overdue)
 - [x] 6.7 **Saved filters** (private / shared)
-- [x] 6.8 Bulk actions in the list (assign, status, sprint, label, delete) behind `task.bulk_update` (sprint action arrives with Phase 7)
+- [x] 6.8 Bulk actions in the list (assign, status, sprint, label, delete) behind `task.bulk_update`
 - [x] 6.9 **Team view**: tasks grouped by person for everyone under me
 - [x] 6.10 Backlog page (rank ordering by drag, `backlog_rank`)
 
 ## Phase 7: Sprints (3 days) âš‘6 â†’ **MVP complete**
-- [ ] 7.1 Migrations: `sprints`, `sprint_task`
-- [ ] 7.2 Create / edit / delete sprint (name, goal, dates)
-- [ ] 7.3 Sprint planning: drag tasks backlog â‡„ sprint; capacity per person (points + hours)
-- [ ] 7.4 **Start sprint** (one active per project; snapshot committed points)
-- [ ] 7.5 Board shows the active sprint only (when sprints are on)
-- [ ] 7.6 **Complete sprint**: unfinished tasks â†’ next sprint or backlog; record outcomes
-- [ ] 7.7 Kanban-mode projects hide sprint UI
-- [ ] 7.8 Tests: sprint lifecycle, carry-over
-- [ ] 7.9 **MVP demo seed data**: 1 company, full hierarchy (HOD â†’ DGM â†’ AGM â†’ DM â†’ 2 TL â†’ 6 Dev), PM, stakeholders, 2 projects, ~60 tasks
+- [x] 7.1 Migrations: `sprints`, `sprint_task`
+- [x] 7.2 Create / edit / delete sprint (name, goal, dates)
+- [x] 7.3 Sprint planning: drag tasks backlog â‡„ sprint; capacity per person (points + hours)
+- [x] 7.4 **Start sprint** (one active per project; snapshot committed points)
+- [x] 7.5 Board shows the active sprint only (when sprints are on)
+- [x] 7.6 **Complete sprint**: unfinished tasks â†’ next sprint or backlog; record outcomes
+- [x] 7.7 Kanban-mode projects hide sprint UI
+- [x] 7.8 Tests: sprint lifecycle, carry-over
+- [x] 7.9 **MVP demo seed data**: 1 company, full hierarchy (HOD â†’ DGM â†’ AGM â†’ DM â†’ 2 TL â†’ 6 Dev), PM, stakeholders, 2 projects, ~60 tasks
 - [ ] 7.10 MVP review with stakeholders â†’ collect feedback
 
 ## Phase 8: Time Tracking & Timesheets (4 days) âš‘5
-- [ ] 8.1 Migrations: `timesheets`, `work_logs`
-- [ ] 8.2 **Log work** dialog on a task (date, hours:minutes, note); update remaining estimate + `time_spent_min`
-- [ ] 8.3 Work log list on the task (edit/delete own)
-- [ ] 8.4 **My Timesheet** weekly grid (tasks Ã— days), add time inline
-- [ ] 8.5 Submit timesheet â†’ lock entries
-- [ ] 8.6 **Approval queue** for TL/DM: approve / return with comment
-- [ ] 8.7 Team timesheet view (who has submitted / missing)
-- [ ] 8.8 Estimate vs actual display on task and epic
-- [ ] 8.9 Tests: locking, approval permissions
+- [x] 8.1 Migrations: `timesheets`, `work_logs`
+- [x] 8.2 **Log work** dialog on a task (date, hours:minutes, note); update remaining estimate + `time_spent_min`
+- [x] 8.3 Work log list on the task (edit/delete own)
+- [x] 8.4 **My Timesheet** weekly grid (tasks Ã— days), add time inline
+- [x] 8.5 Submit timesheet â†’ lock entries
+- [x] 8.6 **Approval queue** for TL/DM: approve / return with comment
+- [x] 8.7 Team timesheet view (who has submitted / missing)
+- [x] 8.8 Estimate vs actual display on task and epic
+- [x] 8.9 Tests: locking, approval permissions
 
 ## Phase 9: Dashboards & Reports (6 days) âš‘7, âš‘8
-- [ ] 9.1 `ProgressService`: % complete (count / points) for project, sprint, epic, person, team
-- [ ] 9.2 Project health rule (on track / at risk / delayed)
-- [ ] 9.3 Dashboard widgets: my tasks, due soon, overdue, workload per person, status donut, project health list
-- [ ] 9.4 Role-based dashboard layouts (Developer, TL, DM, AGM/DGM, HOD, PM, Stakeholder, Company Admin, System Admin)
-- [ ] 9.5 **Drill-down**: HOD â†’ DGM â†’ AGM â†’ DM â†’ TL â†’ developer â†’ tasks
-- [ ] 9.6 Project overview page (progress, burndown, members, recent activity)
-- [ ] 9.7 Reports: **sprint report**, **burndown**, **velocity**
-- [ ] 9.8 Reports: workload by person/team, overdue report, time logged (by person/project/date range)
-- [ ] 9.9 Report filters + "include former employees" option
-- [ ] 9.10 **Export** to Excel/CSV (`maatwebsite/excel`) and print-friendly PDF
-- [ ] 9.11 Query performance: indexes checked, caching heavy widgets (5 min)
+- [x] 9.1 `ProgressService`: % complete (count / points) for project, sprint, epic, person, team
+- [x] 9.2 Project health rule (on track / at risk / delayed)
+- [x] 9.3 Dashboard widgets: my tasks, due soon, overdue, workload per person, status donut, project health list
+- [x] 9.4 Role-based dashboard layouts (Developer, TL, DM, AGM/DGM, HOD, PM, Stakeholder, Company Admin, System Admin)
+- [x] 9.5 **Drill-down**: HOD â†’ DGM â†’ AGM â†’ DM â†’ TL â†’ developer â†’ tasks
+- [x] 9.6 Project overview page (progress, burndown, members, recent activity)
+- [x] 9.7 Reports: **sprint report**, **burndown**, **velocity**
+- [x] 9.8 Reports: workload by person/team, overdue report, time logged (by person/project/date range)
+- [x] 9.9 Report filters + "include former employees" option
+- [x] 9.10 **Export** to Excel/CSV and print-friendly PDF (built in: the `maatwebsite/excel` package could not be installed offline)
+- [x] 9.11 Query performance: indexes checked, caching heavy widgets (5 min)
 
 ## Phase 10: Notifications (3 days) âš‘5
-- [ ] 10.1 Notification classes for every event in WORKFLOW Â§10
-- [ ] 10.2 In-app **bell**: unread count, dropdown, mark read / all read, notifications page
-- [ ] 10.3 Email templates (branded, with company logo)
-- [ ] 10.4 `notification_preferences` page (per event: app / email)
-- [ ] 10.5 Scheduler: daily **due tomorrow** and **overdue** (assignee + manager) jobs
-- [ ] 10.6 Queue all mail; failed job monitoring
-- [ ] 10.7 (Optional) Real-time with **Laravel Reverb**: live board updates + instant notifications
+- [x] 10.1 Notification classes for every event in WORKFLOW Â§10
+- [x] 10.2 In-app **bell**: unread count, dropdown, mark read / all read, notifications page
+- [x] 10.3 Email templates (branded, with company logo)
+- [x] 10.4 `notification_preferences` page (per event: app / email)
+- [x] 10.5 Scheduler: daily **due tomorrow** and **overdue** (assignee + manager) jobs
+- [x] 10.6 Queue all mail; failed job monitoring
+- [ ] 10.7 (Optional) Real-time with **Laravel Reverb**: live board updates + instant notifications (not built; the bell refreshes every minute)
 
 ## Phase 11: Audit, Search, Polish (4 days)
-- [ ] 11.1 `audit_logs` writer for admin actions (roles, permissions, members, exits, rehires, company approvals)
-- [ ] 11.2 Audit log page (company + System Admin) with filters
-- [ ] 11.3 **Global search** (Ctrl+K): tasks by key/title, projects, people
-- [ ] 11.4 Profile page: name, avatar, password, notification settings
-- [ ] 11.5 Company switcher (users in more than one company)
-- [ ] 11.6 Responsive / mobile layout check
-- [ ] 11.7 Empty states, loading skeletons, error pages (403/404/419/500)
-- [ ] 11.8 Keyboard shortcuts (C = create, / = search)
-- [ ] 11.9 Dark mode (optional)
+- [x] 11.1 `audit_logs` writer for admin actions (roles, permissions, members, exits, rehires, company approvals)
+- [x] 11.2 Audit log page (company + System Admin) with filters
+- [x] 11.3 **Global search** (Ctrl+K): tasks by key/title, projects, people
+- [x] 11.4 Profile page: name, avatar, password, notification settings
+- [x] 11.5 Company switcher (users in more than one company)
+- [x] 11.6 Responsive / mobile layout check
+- [x] 11.7 Empty states, loading skeletons, error pages (403/404/419/500)
+- [x] 11.8 Keyboard shortcuts (C = create, / = search)
+- [ ] 11.9 Dark mode (optional; not built)
 
 ## Phase 12: Testing, Security, Deployment (5 days)
 - [ ] 12.1 Feature test coverage for all policies and the visibility scope (target: every role Ã— every module)

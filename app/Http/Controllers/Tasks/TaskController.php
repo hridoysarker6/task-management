@@ -11,9 +11,11 @@ use App\Models\Scopes\OrganizationScope;
 use App\Models\Task;
 use App\Models\TaskActivity;
 use App\Models\TaskLink;
+use App\Models\WorkLog;
 use App\Services\AttachmentService;
 use App\Services\ProgressService;
 use App\Services\TaskService;
+use App\Services\WorkLogService;
 use App\Support\TaskPresenter;
 use App\Support\Tenancy\CurrentOrganization;
 use Illuminate\Http\JsonResponse;
@@ -26,7 +28,7 @@ use Inertia\Response;
 
 class TaskController extends Controller
 {
-    public function __construct(private CurrentOrganization $current, private TaskService $tasks) {}
+    public function __construct(private CurrentOrganization $current, private TaskService $tasks, private WorkLogService $logs) {}
 
     // --- the task page ---------------------------------------------------------------------------
 
@@ -75,6 +77,8 @@ class TaskController extends Controller
             ],
             'project' => ['id' => $project->id, 'key' => $project->key, 'name' => $project->name, 'status' => $project->status, 'progress_mode' => $project->progress_mode],
             'breadcrumbs' => $this->breadcrumbs($task, $me),
+            'sprint' => $project->uses_sprints && ! $external && $task->sprint_id && ($sprint = $task->sprint)
+                ? ['id' => $sprint->id, 'name' => $sprint->name, 'status' => $sprint->status, 'project_id' => $project->id] : null,
             'parent' => $task->parent && Task::visibleTo($me)->whereKey($task->parent_id)->exists()
                 ? ['key' => $task->parent->project->key.'-'.$task->parent->number, 'title' => $task->parent->title, 'type' => $task->parent->type] : null,
             'children' => $children->map(fn (Task $c) => TaskPresenter::row($c, ! $external))->values(),
@@ -95,6 +99,8 @@ class TaskController extends Controller
             'watchers' => $external ? [] : $task->watchers()->with('user:id,name')->get()->map(fn ($w) => ['id' => $w->id, 'name' => $w->user->name])->values(),
             'isWatching' => $task->watchers()->where('memberships.id', $me->id)->exists(),
             'activities' => $this->activities($task, $external),
+            'worklogs' => $external ? [] : $this->worklogs($task, $me),
+            'rollup' => $task->type === 'epic' && ! $external ? $this->effortRollup($task, $me) : null,
             'abilities' => [
                 'update' => Gate::allows('update', $task),
                 'change_status' => Gate::allows('changeStatus', $task),
@@ -108,6 +114,7 @@ class TaskController extends Controller
                 'create_subtask' => Gate::allows('createTask', $project) && in_array($task->type, Task::SUBTASK_PARENTS, true),
                 'internal_comments' => ! $external,
                 'effort' => ! $external,
+                'log_work' => ! $external && Gate::allows('worklog.create') && $this->canLogWork($task, $me),
             ],
             'options' => [
                 'statuses' => $this->tasks->statusMenu($task, $me),
@@ -122,6 +129,57 @@ class TaskController extends Controller
     }
 
     // --- create ----------------------------------------------------------------------------------
+
+    /** Can this person log time here? Same rule the service enforces: an open project they work in, and a live task. */
+    private function canLogWork(Task $task, Membership $me): bool
+    {
+        return ! $task->project->isArchived()
+            && ! in_array($task->status->category, ['triage', 'cancelled'], true)
+            && in_array($this->tasks->projectRole($task->project, $me), ['manager', 'member'], true);
+    }
+
+    /**
+     * The time entries on a task the viewer may see: their own, and their team's with worklog.view_team.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function worklogs(Task $task, Membership $me): array
+    {
+        // Other people's entries: only for those in the viewer's data scope, and only with worklog.view_team.
+        $inScope = $me->hasPermission('worklog.view_team') ? Membership::visibleTo($me)->pluck('id')->flip() : collect();
+
+        return WorkLog::where('task_id', $task->id)->with(['author.user:id,name', 'timesheet:id,status'])
+            ->orderByDesc('work_date')->orderByDesc('id')->limit(200)->get()
+            ->filter(fn (WorkLog $l) => $l->membership_id === $me->id || $inScope->has($l->membership_id))
+            ->map(fn (WorkLog $l) => [
+                'id' => $l->id,
+                'who' => ['id' => $l->membership_id, 'name' => $l->author->user->name],
+                'date' => $l->work_date->toDateString(),
+                'minutes' => $l->minutes,
+                'note' => $l->note,
+                'locked' => $l->timesheet !== null && ! $l->timesheet->isOpen(),
+                'can_edit' => $this->logs->canEdit($l, $me),
+            ])->values()->all();
+    }
+
+    /**
+     * An epic's estimate against the time actually spent, over everything beneath it.
+     *
+     * @return array{original:int,spent:int,remaining:int,tasks:int}
+     */
+    private function effortRollup(Task $epic, Membership $me): array
+    {
+        $children = Task::visibleTo($me)->where('parent_id', $epic->id)->get(['id', 'original_estimate_min', 'remaining_estimate_min', 'time_spent_min']);
+        $grandchildren = Task::visibleTo($me)->whereIn('parent_id', $children->pluck('id'))->get(['id', 'original_estimate_min', 'remaining_estimate_min', 'time_spent_min']);
+        $all = $children->concat($grandchildren);
+
+        return [
+            'original' => (int) $all->sum('original_estimate_min'),
+            'spent' => (int) $all->sum('time_spent_min'),
+            'remaining' => (int) $all->sum('remaining_estimate_min'),
+            'tasks' => $all->count(),
+        ];
+    }
 
     /** Data for the create-task dialog: the projects they can add to, and the choices of the selected project. */
     public function createOptions(Request $request): JsonResponse
@@ -399,7 +457,7 @@ class TaskController extends Controller
     {
         return $task->activities()->with('actor.user:id,name')->limit(150)->get()
             ->reject(fn (TaskActivity $a) => $external && (
-                in_array($a->field, TaskActivity::INTERNAL_FIELDS, true)
+                $a->isInternal()
                 || ($a->event === 'commented' && ($a->meta['is_internal'] ?? false))
             ))
             ->map(fn (TaskActivity $a) => [
